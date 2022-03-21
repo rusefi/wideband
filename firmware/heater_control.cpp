@@ -23,13 +23,24 @@ enum class HeaterState
 };
 
 constexpr int preheatTimeCounter = HEATER_PREHEAT_TIME / HEATER_CONTROL_PERIOD;
+constexpr int batteryStabTimeCounter = HEATER_BATTERY_STAB_TIME / HEATER_CONTROL_PERIOD;
 static int timeCounter = preheatTimeCounter;
+static int batteryStabTime = batteryStabTimeCounter;
 static float rampVoltage = 0;
 static bool heaterAllowed = false;
 
 static HeaterState GetNextState(HeaterState state, float sensorEsr)
 {
-    if (!heaterAllowed)
+    /* measured voltage too low to auto-start heating */
+    if (GetBatteryVoltage() < HEATER_BATTETY_OFF_VOLTAGE) {
+        batteryStabTime = batteryStabTimeCounter;
+    }
+    /* measured voltage is high enougth to auto-start heating, wait some time to stabilize */
+    if ((GetBatteryVoltage() > HEATER_BATTERY_ON_VOLTAGE) && (batteryStabTime > 0)) {
+        batteryStabTime--;
+    }
+
+    if ((!heaterAllowed) && (batteryStabTime > 0))
     {
         // ECU hasn't allowed preheat yet, reset timer, and force preheat state
         timeCounter = preheatTimeCounter;
