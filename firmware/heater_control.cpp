@@ -14,14 +14,6 @@ using namespace wbo;
 // 400khz / 1024 = 390hz PWM
 static Pwm heaterPwm(HEATER_PWM_DEVICE, HEATER_PWM_CHANNEL, 400'000, 1024);
 
-enum class HeaterState
-{
-    Preheat,
-    WarmupRamp,
-    ClosedLoop,
-    Stopped,
-};
-
 constexpr int preheatTimeCounter = HEATER_PREHEAT_TIME / HEATER_CONTROL_PERIOD;
 constexpr int batteryStabTimeCounter = HEATER_BATTERY_STAB_TIME / HEATER_CONTROL_PERIOD;
 static int timeCounter = preheatTimeCounter;
@@ -219,4 +211,24 @@ void SetHeaterAllowed(bool allowed)
 float GetHeaterDuty()
 {
     return heaterPwm.GetLastDuty();
+}
+
+HeaterState GetHeaterState()
+{
+    return state;
+}
+
+const char* describeHeaterState(HeaterState state) {
+    switch (state) {
+        case HeaterState::Preheat:
+            return "Preheat";
+        case HeaterState::WarmupRamp:
+            return "WarmupRamp";
+        case HeaterState::ClosedLoop:
+            return "ClosedLoop";
+        case HeaterState::Stopped:
+            return "Stopped";
+    }
+
+    return "Unknown";
 }
