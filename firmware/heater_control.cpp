@@ -12,7 +12,7 @@
 using namespace wbo;
 
 // 400khz / 1024 = 390hz PWM
-Pwm heaterPwm(HEATER_PWM_DEVICE, HEATER_PWM_CHANNEL, 400'000, 1024);
+static Pwm heaterPwm(HEATER_PWM_DEVICE, HEATER_PWM_CHANNEL, 400'000, 1024);
 
 enum class HeaterState
 {
@@ -205,7 +205,7 @@ void SetHeaterAllowed(bool allowed)
     heaterAllowed = allowed;
 }
 
-uint16_t GetHeaterDuty()
+float GetHeaterDuty()
 {
     return heaterPwm.GetLastDuty();
 }
