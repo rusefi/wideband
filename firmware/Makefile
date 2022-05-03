@@ -145,6 +145,7 @@ CPPSRC = $(ALLCPPSRC) \
           pump_control.cpp \
           uart.cpp \
           interpolation.cpp \
+          auxout.cpp \
           main.cpp
 
 # List ASM source files here.
