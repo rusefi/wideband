@@ -10,3 +10,8 @@
 //    Nernst voltage & ESR sense
 // *******************************
 #define NERNST_INPUT_GAIN (1 / 2.7f)
+
+// *******************************
+//    Nernst voltage & ESR sense
+// *******************************
+#define VM_RESISTOR_VALUE (10)
