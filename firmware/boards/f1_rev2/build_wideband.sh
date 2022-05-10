@@ -47,6 +47,10 @@ echo "Invoking hex2dfu for OpenBLT (for DFU util)"
 $HEX2DFU -i boards/${BOARD}/openblt/bin/openblt_${BOARD}.hex -o ${DELIVER_DIR}/openblt.dfu
 
 echo ""
+echo "OpenBLT bin (for DFU another util)"
+cp -v boards/${BOARD}/openblt/bin/openblt_${BOARD}.bin ${DELIVER_DIR}/openblt.bin
+
+echo ""
 echo "Invoking hex2dfu for composite OpenBLT+Wideband image (for DFU util)"
 $HEX2DFU -i boards/${BOARD}/openblt/bin/openblt_${BOARD}.hex -i build/wideband.hex -C 0x1C -o ${DELIVER_DIR}/wideband.dfu -b ${DELIVER_DIR}/wideband.bin
 
