@@ -159,6 +159,7 @@ ASMXSRC = $(ALLXASMSRC)
 # Inclusion directories.
 INCDIR = $(CONFDIR) \
          $(ALLINC) \
+         util/ \
          util/math/ \
          console/binary/ \
          boards/ \
