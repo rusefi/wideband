@@ -146,6 +146,7 @@ CPPSRC = $(ALLCPPSRC) \
           uart.cpp \
           interpolation.cpp \
           auxout.cpp \
+          util/math/crc32.c \
           console/binary/tunerstudio_io.cpp \
           main.cpp
 
