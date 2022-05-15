@@ -133,7 +133,8 @@ void InitCan()
 void SendRusefiFormat(uint8_t idx)
 {
     auto baseAddress = 0x190 + 2 * idx;
-    auto esr = GetSensorInternalResistance();
+    // use value calculated during pull, as it is not clipped by external analog circuit
+    auto esr = GetSensorInternalResistance(1);
 
     {
         CanTxTyped<wbo::StandardData> frame(baseAddress + 0);

@@ -41,11 +41,11 @@ static void UartThread(void*)
         int duty = GetHeaterDuty() * 100;
 
         size_t writeCount = chsnprintf(printBuffer, 200,
-            "%d.%03d\tAC %d mV\tR: %d\tT: %d\tIpump: %d\tVbat: %d\theater: %s (%d)\tfault: %s\r\n",
+            "%d.%03d\tAC %d %d nV\tR: %d %d\tT: %d %d\tIpump: %d\tVbat: %d\theater: %s (%d)\tfault: %s\r\n",
             lambdaIntPart, lambdaThousandths,
-            (int)(GetNernstAc() * 1000.0),
-            (int)GetSensorInternalResistance(),
-            (int)GetSensorTemperature(),
+            (int)(GetNernstAc(0) * 1000.0 * 1000.0), (int)(GetNernstAc(1) * 1000.0 * 1000.0),
+            (int)GetSensorInternalResistance(0), (int)GetSensorInternalResistance(1),
+            (int)GetSensorTemperature(0), (int)GetSensorTemperature(1),
             (int)(GetPumpNominalCurrent() * 1000),
             batteryVoltageMv,
             describeHeaterState(GetHeaterState()), duty,
