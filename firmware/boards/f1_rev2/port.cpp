@@ -83,3 +83,15 @@ void SetConfiguration(const Configuration& newConfig)
 {
     // TODO: implement me!
 }
+
+/* TS stuff */
+
+void SaveConfiguration() {
+
+}
+
+#define TS_SIGNATURE "rusEFI Wideband Rev2"
+
+const char *getTsSignature() {
+    return BOARD_NAME; //TS_SIGNATURE;
+}
