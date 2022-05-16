@@ -4,9 +4,10 @@
 
 MEMORY
 {
+    blflash (rx) : org = 0x08000000, len = 0
     /* 8k reserved for bootloader */
-    appflash (rx) : org = 0x08000000 + 8k, len = 128k - 1k - 8k
-    configflash (rx) : org = 0x08000000 + 128k - 1k, len = 1k
+    appflash (rx) : org = 0x08000000, len = 128k - 1k
+    configflash (rx) : org = 0x08000000 + 0k - 1k, len = 1k
     flash1 (rx) : org = 0x00000000, len = 0
     flash2 (rx) : org = 0x00000000, len = 0
     flash3 (rx) : org = 0x00000000, len = 0
