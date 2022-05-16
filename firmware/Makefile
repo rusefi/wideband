@@ -147,7 +147,9 @@ CPPSRC = $(ALLCPPSRC) \
           interpolation.cpp \
           auxout.cpp \
           util/math/crc32.c \
+          console/binary/tunerstudio.cpp \
           console/binary/tunerstudio_io.cpp \
+          console/binary/tunerstudio_io_serial.cpp \
           main.cpp
 
 # List ASM source files here.
