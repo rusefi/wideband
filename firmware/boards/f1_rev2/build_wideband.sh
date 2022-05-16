@@ -6,10 +6,10 @@ BOARD=f1_rev2
 
 cd openblt
 
-echo ""
-echo "Building bootloader"
+#echo ""
+#echo "Building bootloader"
 #make clean
-make -j12 BOARD=${BOARD} || exit 1
+#make -j12 BOARD=${BOARD} || exit 1
 
 # back out to the root
 cd ../../..
@@ -17,7 +17,7 @@ cd ../../..
 echo ""
 echo "Build application"
 export EXTRA_PARAMS="-DECHO_UART=TRUE"
-#make clean
+make clean
 make -j12 BOARD=${BOARD} || exit 1
 
 echo ""
