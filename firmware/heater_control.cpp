@@ -153,8 +153,7 @@ static void HeaterThread(void*)
     while (true)
     {
         // Read sensor state
-        // use value calculated during pull, as it is not clipped by external analog circuit
-        float heaterEsr = GetSensorInternalResistance(1);
+        float heaterEsr = GetSensorInternalResistance();
 
         auto heaterAllowState = GetHeaterAllowed();
 
