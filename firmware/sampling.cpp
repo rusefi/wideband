@@ -9,6 +9,10 @@
 #include "port.h"
 #include "io_pins.h"
 
+#if 1 /* tunerstudio */
+#include "livedata.h"
+#endif
+
 // Stored results
 static float nernstAcHi = 0;
 static float nernstAcLo = 0;
@@ -151,6 +155,10 @@ static void SamplingThread(void*)
         }
         state = next_state;
 
+        /* tunerstudio */
+#if 1
+        SamplingUpdateLiveData();
+#endif
     }
 }
 

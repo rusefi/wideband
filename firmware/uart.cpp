@@ -8,6 +8,12 @@
 #include "fault.h"
 #include "uart.h"
 
+#include "tunerstudio.h"
+#include "tunerstudio_io.h"
+#include "wideband_board_config.h"
+
+#if 0
+
 static const UARTConfig uartCfg =
 {
     .txend1_cb = nullptr,
@@ -55,10 +61,35 @@ static void UartThread(void*)
         chThdSleepMilliseconds(50);
     }
 }
+#endif
+
+#ifdef TS_PRIMARY_UART_PORT
+static UartTsChannel primaryChannel(TS_PRIMARY_UART_PORT);
+#endif
+
+#ifdef TS_PRIMARY_SERIAL_PORT
+static SerialTsChannel primaryChannel(TS_PRIMARY_SERIAL_PORT);
+#endif
+
+struct PrimaryChannelThread : public TunerstudioThread {
+    PrimaryChannelThread() : TunerstudioThread("Primary TS Channel") { }
+
+    TsChannelBase* setupChannel() {
+        primaryChannel.start(TS_PRIMARY_BAUDRATE);
+
+        return &primaryChannel;
+    }
+};
+
+static PrimaryChannelThread primaryChannelThread;
 
 void InitUart()
 {
+#if 0
     uartStart(&UARTD1, &uartCfg);
 
     chThdCreateStatic(waUartThread, sizeof(waUartThread), NORMALPRIO, UartThread, nullptr);
+#else
+    primaryChannelThread.Start();
+#endif
 }
