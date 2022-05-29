@@ -73,6 +73,20 @@ AnalogResult AnalogSample()
     };
 }
 
+static struct {
+    uint8_t        pad[128];
+} config;
+
+uint8_t *GetConfiguratiuonPtr()
+{
+    return (uint8_t *)&config;
+}
+
+int GetConfiguratiuonSize()
+{
+    return sizeof(config);
+}
+
 Configuration GetConfiguration()
 {
     // TODO: implement me!
