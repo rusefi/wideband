@@ -74,28 +74,6 @@
 #include "crc.h"
 #include "byteswap.h"
 
-/*
-#include "main_trigger_callback.h"
-#include "flash_main.h"
-
-#include "tunerstudio_io.h"
-#include "malfunction_central.h"
-#include "console_io.h"
-#include "crc.h"
-#include "bluetooth.h"
-#include "tunerstudio_io.h"
-#include "tooth_logger.h"
-#include "electronic_throttle.h"
-
-#include <string.h>
-#include "bench_test.h"
-#include "svnversion.h"
-#include "status_loop.h"
-#include "mmc_card.h"
-
-#include "signature.h"
-*/
-
 
 static void printErrorCounters() {
 //	efiPrintf("TunerStudio size=%d / total=%d / errors=%d / H=%d / O=%d / P=%d / B=%d",
@@ -105,8 +83,9 @@ static void printErrorCounters() {
 //			tsState.writeChunkCommandCounter, tsState.pageCommandCounter);
 }
 
-/* 1S */
-#define TS_COMMUNICATION_TIMEOUT	TIME_MS2I(1000)
+/* TunerStudio repeats connection attempts at ~1Hz rate.
+ * So first char receive timeout should be less than 1s */
+#define TS_COMMUNICATION_TIMEOUT	TIME_MS2I(500)	//0.5 Sec
 
 void tunerStudioDebug(TsChannelBase* tsChannel, const char *msg) {
 //#if EFI_TUNER_STUDIO_VERBOSE
@@ -115,8 +94,8 @@ void tunerStudioDebug(TsChannelBase* tsChannel, const char *msg) {
 }
 
 uint8_t* getWorkingPageAddr() {
-	//return (uint8_t*)&GetConfiguration();
-	return NULL;
+	return GetConfiguratiuonPtr();
+	//return NULL;
 	//return (uint8_t*)engineConfiguration;
 }
 
@@ -232,7 +211,7 @@ static void handleGetStructContent(TsChannelBase* tsChannel, int structId, int s
 
 bool validateOffsetCount(size_t offset, size_t count, TsChannelBase* tsChannel);
 
-extern bool rebootForPresetPending;
+//extern bool rebootForPresetPending;
 
 /**
  * This command is needed to make the whole transfer a bit faster
@@ -244,12 +223,6 @@ void TunerStudio::handleWriteChunkCommand(TsChannelBase* tsChannel, ts_response_
 
 	if (validateOffsetCount(offset, count, tsChannel)) {
 		return;
-	}
-
-	// Skip the write if a preset was just loaded - we don't want to overwrite it
-	if (!rebootForPresetPending) {
-		uint8_t * addr = (uint8_t *) (getWorkingPageAddr() + offset);
-		memcpy(addr, content, count);
 	}
 
 	sendOkResponse(tsChannel, mode);
@@ -284,24 +257,10 @@ void TunerStudio::handleWriteValueCommand(TsChannelBase* tsChannel, ts_response_
 	if (validateOffsetCount(offset, 1, tsChannel)) {
 		return;
 	}
-
-	// Skip the write if a preset was just loaded - we don't want to overwrite it
-	if (!rebootForPresetPending) {
-		getWorkingPageAddr()[offset] = value;
-	}
 }
 
 void TunerStudio::handlePageReadCommand(TsChannelBase* tsChannel, ts_response_format_e mode, uint16_t offset, uint16_t count) {
 	tsState.readPageCommandsCounter++;
-
-	if (rebootForPresetPending) {
-		sendErrorCode(tsChannel, TS_RESPONSE_UNRECOGNIZED_COMMAND);
-		return;
-	}
-
-//#if EFI_TUNER_STUDIO_VERBOSE
-//	efiPrintf("READ mode=%d offset=%d size=%d", mode, offset, count);
-//#endif
 
 	if (validateOffsetCount(offset, count, tsChannel)) {
 		return;
@@ -309,9 +268,6 @@ void TunerStudio::handlePageReadCommand(TsChannelBase* tsChannel, ts_response_fo
 
 	const uint8_t* addr = getWorkingPageAddr() + offset;
 	tsChannel->sendResponse(mode, addr, count);
-//#if EFI_TUNER_STUDIO_VERBOSE
-//	efiPrintf("Sending %d done", count);
-//#endif
 }
 
 void requestBurn(void) {
@@ -390,9 +346,7 @@ static void handleTestCommand(TsChannelBase* tsChannel) {
  */
 void TunerStudio::handleQueryCommand(TsChannelBase* tsChannel, ts_response_format_e mode) {
 	tsState.queryCommandCounter++;
-//#if EFI_TUNER_STUDIO_VERBOSE
-//	efiPrintf("got S/H (queryCommand) mode=%d", mode);
-//#endif
+
 	const char *signature = getTsSignature();
 	tsChannel->sendResponse(mode, (const uint8_t *)signature, strlen(signature) + 1);
 }
@@ -436,6 +390,8 @@ bool TunerStudio::handlePlainCommand(TsChannelBase* tsChannel, uint8_t command) 
 TunerStudio tsInstance;
 
 static int tsProcessOne(TsChannelBase* tsChannel) {
+	static bool in_sync = false;
+
 	if (!tsChannel->isReady()) {
 		chThdSleepMilliseconds(10);
 		return -1;
@@ -453,6 +409,7 @@ static int tsProcessOne(TsChannelBase* tsChannel) {
 		// assume there's connection loss and notify the bluetooth init code
 		bluetoothSoftwareDisconnectNotify();
 #endif  /* EFI_BLUETOOTH_SETUP */
+		in_sync = false;
 		return -1;
 	}
 
@@ -461,9 +418,11 @@ static int tsProcessOne(TsChannelBase* tsChannel) {
 	}
 
 	uint8_t secondByte;
-	received = tsChannel->readTimeout(&secondByte, 1, TS_COMMUNICATION_TIMEOUT);
+	/* second byte should be received within minimal delay */
+	received = tsChannel->readTimeout(&secondByte, 1, TIME_MS2I(10));
 	if (received != 1) {
 		tunerStudioError(tsChannel, "TS: ERROR: no second byte");
+		in_sync = false;
 		return -1;
 	}
 
@@ -472,32 +431,61 @@ static int tsProcessOne(TsChannelBase* tsChannel) {
 	if (incomingPacketSize == 0 || incomingPacketSize > (sizeof(tsChannel->scratchBuffer) - CRC_WRAPPING_SIZE)) {
 		//efiPrintf("process_ts: channel=%s invalid size: %d", tsChannel->name, incomingPacketSize);
 		//tunerStudioError(tsChannel, "process_ts: ERROR: CRC header size");
-		sendErrorCode(tsChannel, TS_RESPONSE_UNDERRUN);
+		if (in_sync) {
+			/* send error only if previously we where in sync */
+			sendErrorCode(tsChannel, TS_RESPONSE_UNDERRUN);
+		}
+		in_sync = false;
 		return -1;
 	}
 
-	received = tsChannel->readTimeout((uint8_t* )tsChannel->scratchBuffer, 1, TS_COMMUNICATION_TIMEOUT);
-	if (received != 1) {
-		//tunerStudioError(tsChannel, "ERROR: did not receive command");
-		sendErrorCode(tsChannel, TS_RESPONSE_UNDERRUN);
-		return -1;
-	}
+	char command;
+	int expectedSize = incomingPacketSize + CRC_VALUE_SIZE;
 
-	char command = tsChannel->scratchBuffer[0];
-	if (!isKnownCommand(command)) {
-		//efiPrintf("unexpected command %x", command);
-		sendErrorCode(tsChannel, TS_RESPONSE_UNRECOGNIZED_COMMAND);
-		return -1;
-	}
+	/* NOTE: This part is very sensetive to execution time. With -O0 optimization
+	 * we will get a lot of underrun error here because of lost of one byte here */
 
-	int expectedSize = incomingPacketSize + CRC_VALUE_SIZE - 1;
-	received = tsChannel->readTimeout((uint8_t*)(tsChannel->scratchBuffer + 1), expectedSize, TS_COMMUNICATION_TIMEOUT);
-	if (received != expectedSize) {
-		//efiPrintf("Got only %d bytes while expecting %d for command %c", received,
-		//		expectedSize, command);
-		//tunerStudioError(tsChannel, "ERROR: not enough bytes in stream");
-		sendErrorCode(tsChannel, TS_RESPONSE_UNDERRUN);
-		return -1;
+	if (in_sync == false) {
+		/* receive only command byte to check if it is supported */
+		received = tsChannel->readTimeout((uint8_t*)(tsChannel->scratchBuffer), 1, TS_COMMUNICATION_TIMEOUT);
+
+		command = tsChannel->scratchBuffer[0];
+		if (!isKnownCommand(command)) {
+			/* do not report any error as we are not in sync */
+			return -1;
+		}
+
+		received = tsChannel->readTimeout((uint8_t*)(tsChannel->scratchBuffer) + 1, expectedSize - 1, TS_COMMUNICATION_TIMEOUT);
+		if (received != expectedSize - 1) {
+			/* do not report any error as we are not in sync */
+			return -1;
+		}
+	} else {
+		/* receive full packet, only after check if command is supported
+		 * otherwise it will break syncronization and cause rain of errors */
+		received = tsChannel->readTimeout((uint8_t*)(tsChannel->scratchBuffer), expectedSize, TS_COMMUNICATION_TIMEOUT);
+		if (received != expectedSize) {
+			//efiPrintf("Got only %d bytes while expecting %d for command %c", received,
+			//		expectedSize, command);
+			//tunerStudioError(tsChannel, "ERROR: not enough bytes in stream");
+			if (in_sync) {
+				/* send error only if previously we where in sync */
+				sendErrorCode(tsChannel, TS_RESPONSE_UNDERRUN);
+			}
+			in_sync = false;
+			return -1;
+		}
+
+		command = tsChannel->scratchBuffer[0];
+		if (!isKnownCommand(command)) {
+			//efiPrintf("unexpected command %x", command);
+			if (in_sync) {
+				/* send error only if previously we where in sync */
+				sendErrorCode(tsChannel, TS_RESPONSE_UNRECOGNIZED_COMMAND);
+			}
+			in_sync = false;
+			return -1;
+		}
 	}
 
 	uint32_t expectedCrc = *(uint32_t*) (tsChannel->scratchBuffer + incomingPacketSize);
@@ -513,9 +501,16 @@ static int tsProcessOne(TsChannelBase* tsChannel) {
 		//efiPrintf("TunerStudio: command %c actual CRC %x/expected %x", tsChannel->scratchBuffer[0],
 		//		actualCrc, expectedCrc);
 		tunerStudioError(tsChannel, "ERROR: CRC issue");
-		sendErrorCode(tsChannel, TS_RESPONSE_CRC_FAILURE);
+		if (in_sync) {
+			/* send error only if previously we where in sync */
+			sendErrorCode(tsChannel, TS_RESPONSE_CRC_FAILURE);
+		}
+		in_sync = false;
 		return -1;
 	}
+
+	/* we were able to receive command with correct crc and size! */
+	in_sync = true;
 
 	int success = tsInstance.handleCrcCommand(tsChannel, tsChannel->scratchBuffer, incomingPacketSize);
 
