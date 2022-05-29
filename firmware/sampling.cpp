@@ -14,18 +14,10 @@
 #endif
 
 // Stored results
-static float nernstAcHi = 0;
-static float nernstAcLo = 0;
+static float nernstAc = 0;
 static float nernstDc = 0;
 static float pumpCurrentSenseVoltage = 0;
 static float internalBatteryVoltage = 0;
-
-enum {
-    STATE_Z1 = 0,
-    STATE_PULLUP = 1,
-    STATE_Z2 = 2,
-    STATE_PULLDOWN = 3
-};
 
 static const struct inter_point lsu49_r_to_temp[] =
 {
@@ -55,20 +47,11 @@ constexpr float f_abs(float x)
 
 static THD_WORKING_AREA(waSamplingThread, 256);
 
-/* Get previous sample index from current index and offset, offset in -7..0 range */
-static unsigned int cb_idx(unsigned int idx, int offset)
-{
-    //return (idx + 8 + offset) % 8;
-    return (idx + 8 + offset) & 0x07;
-}
-
 static void SamplingThread(void*)
 {
-    unsigned int idx = 0;
-    int state = STATE_Z1;
+    int idx = 0;
     bool ready = false;
-    /* store 2 full cycles */
-    float r[8];
+    float r[3] = {0, 0, 0};
 
     /* GD32: Insert 20us delay after ADC enable */
     chThdSleepMilliseconds(1);
@@ -77,20 +60,8 @@ static void SamplingThread(void*)
     {
         auto result = AnalogSample();
 
-        int next_state = (state + 1) % 4;
         // Toggle the pin after sampling so that any switching noise occurs while we're doing our math instead of when sampling
-        if ((next_state == STATE_Z1) || (next_state == STATE_Z2)) {
-            /* set pin to hi-z (input) mode */
-            palSetPadMode(NERNST_ESR_DRIVER_PORT, NERNST_ESR_DRIVER_PIN, PAL_MODE_INPUT);
-        } else if (next_state == STATE_PULLUP) {
-            /* first set level then switch to output mode to avoid nidle to oposite level */
-            palSetPad(NERNST_ESR_DRIVER_PORT, NERNST_ESR_DRIVER_PIN);
-            palSetPadMode(NERNST_ESR_DRIVER_PORT, NERNST_ESR_DRIVER_PIN, PAL_MODE_OUTPUT_PUSHPULL);
-        } else /* if (next_state == STATE_PULLDOWN) */ {
-            /* first set level then switch to output mode to avoid nidle to oposite level */
-            palClearPad(NERNST_ESR_DRIVER_PORT, NERNST_ESR_DRIVER_PIN);
-            palSetPadMode(NERNST_ESR_DRIVER_PORT, NERNST_ESR_DRIVER_PIN, PAL_MODE_OUTPUT_PUSHPULL);
-        }
+        palTogglePad(NERNST_ESR_DRIVER_PORT, NERNST_ESR_DRIVER_PIN);
 
         #ifdef BATTERY_INPUT_DIVIDER
             internalBatteryVoltage = result.BatteryVoltage;
@@ -100,7 +71,6 @@ static void SamplingThread(void*)
 
         if (ready)
         {
-#if 0
             // opposite_phase estimates where the previous sample would be had we not been toggling
             // AKA the absolute value of the difference between opposite_phase and r[idx] is the amplitude
             // of the AC component on the nernst voltage.  We have to pull this trick so as to use the past 3
@@ -115,27 +85,6 @@ static void SamplingThread(void*)
             nernstAc =
                 (1 - ESR_SENSE_ALPHA) * nernstAc +
                 ESR_SENSE_ALPHA * nernstAcLocal;
-#else
-            if ((state == STATE_PULLUP) || (state == STATE_PULLDOWN)) {
-                /* get 'not affected' nernst voltage (two closest states when we were not driving ESR circuit) */
-                nernstDc = (r[cb_idx(idx, -1)] + r[cb_idx(idx, -3)]) / 2;
-                float pullPhase = (r[cb_idx(idx, 0)] + r[cb_idx(idx, -4)]) / 2;
-
-                float nernstAcLocal = f_abs(nernstDc - pullPhase) * 2;
-                if (state == STATE_PULLUP) {
-                    nernstAcHi =
-                        (1 - ESR_SENSE_ALPHA) * nernstAcHi +
-                        ESR_SENSE_ALPHA * nernstAcLocal;
-                } else {
-                    nernstAcLo =
-                        (1 - ESR_SENSE_ALPHA) * nernstAcLo +
-                        ESR_SENSE_ALPHA * nernstAcLocal;
-                }
-            } else {
-                /* get 'not affected' nernst voltage (two closest states when we were not driving ESR circuit) */
-                nernstDc = (r[cb_idx(idx, 0)] + r[cb_idx(idx, -2)]) / 2;
-            }
-#endif
 
             // Exponential moving average (aka first order lpf)
             pumpCurrentSenseVoltage =
@@ -144,12 +93,11 @@ static void SamplingThread(void*)
         }
 
         idx++;
-        if (idx == 8)
+        if (idx == 3)
         {
             ready = true;
             idx = 0;
         }
-        state = next_state;
 
         /* tunerstudio */
 #if 1
@@ -164,24 +112,24 @@ void StartSampling()
     chThdCreateStatic(waSamplingThread, sizeof(waSamplingThread), NORMALPRIO + 5, SamplingThread, nullptr);
 }
 
-float GetNernstAc(int hi)
+float GetNernstAc()
 {
-    return hi ? nernstAcHi : nernstAcLo;
+    return nernstAc;
 }
 
-float GetSensorInternalResistance(int hi)
+float GetSensorInternalResistance()
 {
     // Sensor is the lowside of a divider, top side is 22k, and 3.3v AC pk-pk is injected
-    float totalEsr = ESR_SUPPLY_R / (VCC_VOLTS / GetNernstAc(hi) - 1);
+    float totalEsr = ESR_SUPPLY_R / (VCC_VOLTS / GetNernstAc() - 1);
 
     // There is a resistor between the opamp and Vm sensor pin.  Remove the effect of that
     // resistor so that the remainder is only the ESR of the sensor itself
     return totalEsr - VM_RESISTOR_VALUE;
 }
 
-float GetSensorTemperature(int hi)
+float GetSensorTemperature()
 {
-    return interpolate_1d_float(lsu49_r_to_temp, ARRAY_SIZE(lsu49_r_to_temp), GetSensorInternalResistance(hi));
+    return interpolate_1d_float(lsu49_r_to_temp, ARRAY_SIZE(lsu49_r_to_temp), GetSensorInternalResistance());
 }
 
 float GetNernstDc()

@@ -10,7 +10,7 @@ volatile struct livedata_afr_s livedata_afr;
 void SamplingUpdateLiveData()
 {
     livedata_afr.afr = GetLambda();
-    livedata_afr.temperature = (GetSensorTemperature(0) + GetSensorTemperature(1)) / 2;
+    livedata_afr.temperature = GetSensorTemperature();
     livedata_afr.nernstVoltage = GetNernstDc();
     livedata_afr.pumpCurrentTarget = GetPumpCurrent();
     livedata_afr.pumpCurrentMeasured = GetPumpNominalCurrent();

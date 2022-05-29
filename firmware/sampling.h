@@ -2,9 +2,9 @@
 
 void StartSampling();
 
-float GetNernstAc(int hi);
-float GetSensorInternalResistance(int hi);
-float GetSensorTemperature(int hi);
+float GetNernstAc();
+float GetSensorInternalResistance();
+float GetSensorTemperature();
 float GetNernstDc();
 
 float GetPumpNominalCurrent();
