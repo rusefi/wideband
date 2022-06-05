@@ -24,6 +24,7 @@ struct livedata_afr_s {
 			float nernstVoltage;
 			float pumpCurrentTarget;
 			float pumpCurrentMeasured;
+			float heaterDuty;
 		};
 		uint8_t pad[32];
 	};
