@@ -12,25 +12,13 @@
 #include "tunerstudio_io.h"
 #include "wideband_board_config.h"
 
-#if 0
+#ifdef UART_DEBUG
 
-static const UARTConfig uartCfg =
-{
-    .txend1_cb = nullptr,
-    .txend2_cb = nullptr,
-    .rxend_cb = nullptr,
-    .rxchar_cb = nullptr,
-    .rxerr_cb = nullptr,
-    .timeout_cb = nullptr,
-
-#ifdef STM32F0XX
-    .timeout = 0,
-#endif
-
+SerialConfig cfg = {
     .speed = 115200,
     .cr1 = 0,
-    .cr2 = 0,
-    .cr3 = 0,
+    .cr2 = USART_CR2_STOP1_BITS | USART_CR2_LINEN,
+    .cr3 = 0
 };
 
 static char printBuffer[200];
@@ -38,6 +26,8 @@ static char printBuffer[200];
 static THD_WORKING_AREA(waUartThread, 512);
 static void UartThread(void*)
 {
+    sdStart(&SD1, &cfg);
+
     while(true)
     {
         float lambda = GetLambda();
@@ -56,12 +46,14 @@ static void UartThread(void*)
             batteryVoltageMv,
             describeHeaterState(GetHeaterState()), duty,
             describeFault(GetCurrentFault()));
-        uartStartSend(&UARTD1, writeCount, printBuffer);
+        chnWrite(&SD1, (const uint8_t *)printBuffer, writeCount);
 
         chThdSleepMilliseconds(50);
     }
 }
-#endif
+#else /* ! UART_DEBUG */
+
+static PrimaryChannelThread primaryChannelThread;
 
 #ifdef TS_PRIMARY_UART_PORT
 static UartTsChannel primaryChannel(TS_PRIMARY_UART_PORT);
@@ -81,15 +73,13 @@ struct PrimaryChannelThread : public TunerstudioThread {
     }
 };
 
-static PrimaryChannelThread primaryChannelThread;
+#endif /* UART_DEBUG */
 
 void InitUart()
 {
-#if 0
-    uartStart(&UARTD1, &uartCfg);
-
+#ifdef UART_DEBUG
     chThdCreateStatic(waUartThread, sizeof(waUartThread), NORMALPRIO, UartThread, nullptr);
-#else
+#else /* ! UART_DEBUG */
     primaryChannelThread.Start();
-#endif
+#endif  /* UART_DEBUG */
 }
