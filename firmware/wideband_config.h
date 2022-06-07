@@ -10,6 +10,10 @@
     #define AFR_CHANNELS 1
 #endif
 
+#ifndef EGT_CHANNELS
+    #define EGT_CHANNELS 0
+#endif
+
 // *******************************
 //    Nernst voltage & ESR sense
 // *******************************

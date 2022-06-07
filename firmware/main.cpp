@@ -10,6 +10,9 @@
 #include "uart.h"
 #include "io_pins.h"
 #include "auxout.h"
+#include "max31855.h"
+
+#include "wideband_config.h"
 
 using namespace wbo;
 
@@ -33,6 +36,10 @@ int main() {
     InitCan();
 #ifdef ECHO_UART
     InitUart();
+#endif
+
+#if (EGT_CHANNELS > 0)
+    EgtThread.Start();
 #endif
 
     while(true)
