@@ -39,6 +39,9 @@ const PALConfig pal_default_config =
  * any other initialization.
  */
 void __early_init(void) {
+  AFIO->MAPR |= AFIO_MAPR_SPI1_REMAP |  /* remap SPI1 to PB3, PB4, PB5 and PA15 */
+                AFIO_MAPR_I2C1_REMAP |  /* remap I2C1 to PB8, PB9 */
+                AFIO_MAPR_PD01_REMAP;   /* remap PD0, PD1 onto OSC_IN and OSC_OUT */
 
   stm32_clock_init();
 }
