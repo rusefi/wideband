@@ -74,6 +74,13 @@
 #include "crc.h"
 #include "byteswap.h"
 
+#ifndef EFI_BLUETOOTH_SETUP
+	#define EFI_BLUETOOTH_SETUP 0
+#endif
+
+#ifndef EFI_TEXT_LOGGING
+	#define EFI_TEXT_LOGGING 0
+#endif
 
 static void printErrorCounters() {
 //	efiPrintf("TunerStudio size=%d / total=%d / errors=%d / H=%d / O=%d / P=%d / B=%d",
@@ -88,6 +95,8 @@ static void printErrorCounters() {
 #define TS_COMMUNICATION_TIMEOUT	TIME_MS2I(500)	//0.5 Sec
 
 void tunerStudioDebug(TsChannelBase* tsChannel, const char *msg) {
+	(void)tsChannel;
+	(void)msg;
 //#if EFI_TUNER_STUDIO_VERBOSE
 //	efiPrintf("%s: %s", tsChannel->name, msg);
 //#endif /* EFI_TUNER_STUDIO_VERBOSE */
@@ -219,6 +228,8 @@ bool validateOffsetCount(size_t offset, size_t count, TsChannelBase* tsChannel);
  */
 void TunerStudio::handleWriteChunkCommand(TsChannelBase* tsChannel, ts_response_format_e mode, uint16_t offset, uint16_t count,
 		void *content) {
+	(void)content;
+
 	tsState.writeChunkCommandCounter++;
 
 	if (validateOffsetCount(offset, count, tsChannel)) {
@@ -249,6 +260,7 @@ void TunerStudio::handleCrc32Check(TsChannelBase *tsChannel, ts_response_format_
 void TunerStudio::handleWriteValueCommand(TsChannelBase* tsChannel, ts_response_format_e mode, uint16_t offset, uint8_t value) {
 	(void)tsChannel;
 	(void)mode;
+	(void)value;
 
 	tsState.writeValueCommandCounter++;
 

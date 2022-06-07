@@ -13,7 +13,7 @@
 #include "livedata.h"
 
 void copyRange(uint8_t* destination, FragmentList src, size_t skip, size_t size) {
-	int fragmentIndex = 0;
+	unsigned int fragmentIndex = 0;
 
 	// Find which fragment to start - skip any full fragments smaller than `skip` parameter
 	while (skip > src.fragments[fragmentIndex].size && fragmentIndex <= src.count) {
