@@ -31,30 +31,37 @@ static void UartThread(void*)
 
     while(true)
     {
-        float lambda = GetLambda();
-        int lambdaIntPart = lambda;
-        int lambdaThousandths = (lambda - lambdaIntPart) * 1000;
-        int batteryVoltageMv = GetInternalBatteryVoltage() * 1000;
-        int duty = GetHeaterDuty() * 100;
+        int ch;
 
-        size_t writeCount = chsnprintf(printBuffer, 200,
-            "%d.%03d\tAC %d mV\tR: %d\tT: %d\tIpump: %d\tVbat: %d\theater: %s (%d)\tfault: %s\r\n",
-            lambdaIntPart, lambdaThousandths,
-            (int)(GetNernstAc() * 1000.0),
-            (int)GetSensorInternalResistance(),
-            (int)GetSensorTemperature(),
-            (int)(GetPumpNominalCurrent() * 1000),
-            batteryVoltageMv,
-            describeHeaterState(GetHeaterState()), duty,
-            describeFault(GetCurrentFault()));
-        chnWrite(&SD1, (const uint8_t *)printBuffer, writeCount);
-        chThdSleepMilliseconds(50);
+        for (ch = 0; ch < AFR_CHANNELS; ch++) {
+            float lambda = GetLambda(ch);
+            int lambdaIntPart = lambda;
+            int lambdaThousandths = (lambda - lambdaIntPart) * 1000;
+            int batteryVoltageMv = GetInternalBatteryVoltage(ch) * 1000;
+            int duty = GetHeaterDuty(ch) * 100;
 
-        writeCount = chsnprintf(printBuffer, 200,
-            "EGT: %d C (int %d C)\r\n",
-            (int)EgtThread.temp[0], (int)EgtThread.int_temp[0]);
-        chnWrite(&SD1, (const uint8_t *)printBuffer, writeCount);
-        chThdSleepMilliseconds(50);
+            size_t writeCount = chsnprintf(printBuffer, 200,
+                "[AFR%d]: %d.%03d\tAC %d mV\tR: %d\tT: %d\tIpump: %d\tVbat: %d\theater: %s (%d)\tfault: %s\r\n",
+                ch,
+                lambdaIntPart, lambdaThousandths,
+                (int)(GetNernstAc(ch) * 1000.0),
+                (int)GetSensorInternalResistance(ch),
+                (int)GetSensorTemperature(ch),
+                (int)(GetPumpNominalCurrent(ch) * 1000),
+                batteryVoltageMv,
+                describeHeaterState(GetHeaterState(ch)), duty,
+                describeFault(GetCurrentFault(ch)));
+            chnWrite(&SD1, (const uint8_t *)printBuffer, writeCount);
+        }
+
+        for (ch = 0; ch < EGT_CHANNELS; ch++) {
+            size_t writeCount = chsnprintf(printBuffer, 200,
+                "EGT[%d]: %d C (int %d C)\r\n",
+                ch, (int)EgtThread.temp[ch], (int)EgtThread.int_temp[ch]);
+            chnWrite(&SD1, (const uint8_t *)printBuffer, writeCount);
+        }
+
+        chThdSleepMilliseconds(100);
     }
 }
 #else /* ! UART_DEBUG */

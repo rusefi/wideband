@@ -46,7 +46,10 @@ void AuxOutThread(void*)
 {
     while(1)
     {
-        SetAuxDac(0, GetLambda());
+        for (int ch = 0; ch < AFR_CHANNELS; ch++)
+        {
+            SetAuxDac(ch, GetLambda(ch));
+        }
 
         chThdSleepMilliseconds(10);
     }

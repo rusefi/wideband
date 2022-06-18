@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include "wideband_config.h"
+
 /* +0 offset */
 struct livedata_common_s {
 	union {
@@ -30,7 +32,7 @@ struct livedata_afr_s {
 	};
 };
 
-extern volatile struct livedata_afr_s livedata_afr;
+extern volatile struct livedata_afr_s livedata_afr[AFR_CHANNELS];
 
 /* update functions */
 void SamplingUpdateLiveData();
