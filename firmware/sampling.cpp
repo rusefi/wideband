@@ -19,6 +19,7 @@ struct measure_results {
     float nernstDc;
     float pumpCurrentSenseVoltage;
     float internalBatteryVoltage;
+    float r_buf[3];
 };
 
 static struct measure_results results[AFR_CHANNELS];
@@ -56,7 +57,6 @@ static void SamplingThread(void*)
 {
     int idx = 0;
     bool ready = false;
-    float r_buf[AFR_CHANNELS][3];
 
     /* GD32: Insert 20us delay after ADC enable */
     chThdSleepMilliseconds(1);
@@ -70,13 +70,11 @@ static void SamplingThread(void*)
 
         for (int ch = 0; ch < AFR_CHANNELS; ch++) {
             struct measure_results *res = &results[ch];
-            float *r = r_buf[ch];
-
             #ifdef BATTERY_INPUT_DIVIDER
                 res->internalBatteryVoltage = result.ch[ch].BatteryVoltage;
             #endif
 
-            r[idx] = result.ch[ch].NernstVoltage;
+            res->r_buf[idx] = result.ch[ch].NernstVoltage;
 
             if (ready)
             {
@@ -85,11 +83,11 @@ static void SamplingThread(void*)
                 // of the AC component on the nernst voltage.  We have to pull this trick so as to use the past 3
                 // samples to cancel out any slope in the DC (aka actual nernst cell output) from the AC measurement
                 // See firmware/sampling.png for a drawing of what's going on here
-                float opposite_phase = (r[idx] + r[(idx + 1) % 3]) / 2;
+                float opposite_phase = (res->r_buf[idx] + res->r_buf[(idx + 1) % 3]) / 2;
 
                 // Compute AC (difference) and DC (average) components
-                float nernstAcLocal = f_abs(opposite_phase - r[(idx + 2) % 3]);
-                res->nernstDc = (opposite_phase + r[(idx + 1) % 3]) / 2;
+                float nernstAcLocal = f_abs(opposite_phase - res->r_buf[(idx + 2) % 3]);
+                res->nernstDc = (opposite_phase + res->r_buf[(idx + 1) % 3]) / 2;
 
                 res->nernstAc =
                     (1 - ESR_SENSE_ALPHA) * res->nernstAc +
