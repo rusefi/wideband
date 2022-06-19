@@ -1,7 +1,11 @@
 #pragma once
 
+#include "hal.h"
+
 #include "wideband_config.h"
 #include "thread_controller.h"
+
+#ifdef HAL_USE_SPI
 
 #define MAX31855_THREAD_STACK 	(512)
 #define MAX31855_THREAD_PRIO	(NORMALPRIO + 1)
@@ -31,3 +35,5 @@ public:
 };
 
 extern Max31855Thread EgtThread;
+
+#endif
