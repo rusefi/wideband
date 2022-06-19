@@ -41,9 +41,10 @@ static void UartThread(void*)
             int duty = GetHeaterDuty(ch) * 100;
 
             size_t writeCount = chsnprintf(printBuffer, 200,
-                "[AFR%d]: %d.%03d\tAC %d mV\tR: %d\tT: %d\tIpump: %d\tVbat: %d\theater: %s (%d)\tfault: %s\r\n",
+                "[AFR%d]: %d.%03d DC %4d mV AC %4d mV Rint: %5d T: %4d C Ipump: %6d uA Vheater: %5d heater: %s (%d)\tfault: %s\r\n",
                 ch,
                 lambdaIntPart, lambdaThousandths,
+                (int)(GetNernstDc(ch) * 1000.0),
                 (int)(GetNernstAc(ch) * 1000.0),
                 (int)GetSensorInternalResistance(ch),
                 (int)GetSensorTemperature(ch),
