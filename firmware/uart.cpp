@@ -93,7 +93,7 @@ void InitUart()
 {
 #ifdef UART_DEBUG
     chThdCreateStatic(waUartThread, sizeof(waUartThread), NORMALPRIO, UartThread, nullptr);
-#else /* ! UART_DEBUG */
+#elif defined(TS_PRIMARY_UART_PORT) || defined(TS_PRIMARY_SERIAL_PORT)
     primaryChannelThread.Start();
-#endif  /* UART_DEBUG */
+#endif
 }
