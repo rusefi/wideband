@@ -1,16 +1,7 @@
 #include "pwm.h"
 
-Pwm::Pwm(PWMDriver& driver, uint8_t channel, uint32_t counterFrequency, uint32_t counterPeriod)
-    : m_driver(&driver)
-    , m_channel(channel)
-    , m_counterFrequency(counterFrequency)
-    , m_counterPeriod(counterPeriod)
-{
-}
-
 Pwm::Pwm(PWMDriver& driver)
     : m_driver(&driver)
-    , m_channel(0)
     , m_counterFrequency(0)
     , m_counterPeriod(0)
 {
@@ -60,17 +51,13 @@ float clampF(float min, float clamp, float max) {
 
 void Pwm::SetDuty(int channel, float duty) {
     auto dutyFloat = clampF(0, duty, 1);
-    m_dutyFloat = dutyFloat;
+    m_dutyFloat[channel] = dutyFloat;
     pwmcnt_t highTime = m_counterPeriod * dutyFloat;
 
-    pwm_lld_enable_channel(m_driver, channel, highTime);
+    pwmEnableChannel(m_driver, channel, highTime);
 }
 
-void Pwm::SetDuty(float duty) {
-    SetDuty(m_channel, duty);
-}
-
-float Pwm::GetLastDuty() const
+float Pwm::GetLastDuty(int channel)
 {
-    return m_dutyFloat;
+    return m_dutyFloat[channel];
 }
