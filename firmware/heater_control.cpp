@@ -102,6 +102,12 @@ static HeaterState GetNextState(struct heater_state &s, HeaterAllow heaterAllowS
 
     if (!heaterAllowed)
     {
+        // if heater voltage too low to start pre-heat
+        if (batteryVoltage < HEATER_BATTETY_OFF_VOLTAGE)
+        {
+            SetFault(s.ch, Fault::SensorNoHeatSupply);
+            return HeaterState::NoHeaterSupply;
+        }
         // ECU hasn't allowed preheat yet, reset timer, and force preheat state
         s.timeCounter = preheatTimeCounter;
         return HeaterState::Preheat;
@@ -156,6 +162,9 @@ static HeaterState GetNextState(struct heater_state &s, HeaterAllow heaterAllowS
 
             break;
         case HeaterState::Stopped: break;
+        case HeaterState::NoHeaterSupply:
+            /* TODO: add exit condition */
+            break;
     }
 
     return s.heaterState;
@@ -184,6 +193,9 @@ static float GetVoltageForState(struct heater_state &s, float heaterEsr)
             return 7.5f - s.heaterPid.GetOutput(HEATER_TARGET_ESR, heaterEsr);
         case HeaterState::Stopped:
             // Something has gone wrong, turn off the heater.
+            return 0;
+        case HeaterState::NoHeaterSupply:
+            // Heater supply is not applied yet
             return 0;
     }
 
@@ -289,6 +301,8 @@ const char* describeHeaterState(HeaterState state)
             return "ClosedLoop";
         case HeaterState::Stopped:
             return "Stopped";
+        case HeaterState::NoHeaterSupply:
+            return "NoHeaterSupply";
     }
 
     return "Unknown";
