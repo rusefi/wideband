@@ -108,6 +108,7 @@ static HeaterState GetNextState(struct heater_state &s, HeaterAllow heaterAllowS
             SetFault(s.ch, Fault::SensorNoHeatSupply);
             return HeaterState::NoHeaterSupply;
         }
+        SetFault(s.ch, Fault::None);
         // ECU hasn't allowed preheat yet, reset timer, and force preheat state
         s.timeCounter = preheatTimeCounter;
         return HeaterState::Preheat;
