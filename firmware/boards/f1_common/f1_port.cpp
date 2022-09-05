@@ -28,6 +28,17 @@ void Configuration::LoadDefaults()
 {
     CanIndexOffset = 0;
 
+#if 0
+    // https://rusefi.com/forum/viewtopic.php?f=4&t=2410 for now
+    auxInput[0] = 0; // AFR0
+    auxOutBins[0]   = { 10.01, 11.01, 12.01, 13.01, 14.01, 15.01, 16.01, 20.01 };
+    auxOutValues[0] = {  1.00,  0.90,  0.80,  0.70,  0.60,  0,50,  0.40,  0.00 };
+
+    // Second output emulated narrow band AFR
+    // see http://www.edproject.co.uk/NarrowAFR.html
+
+#endif
+
     /* Finaly */
     Tag = ExpectedTag;
 }
