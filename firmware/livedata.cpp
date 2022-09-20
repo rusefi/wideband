@@ -11,6 +11,8 @@
 #include <rusefi/arrays.h>
 #include <rusefi/fragments.h>
 
+#if defined(TS_ENABLED)
+
 static livedata_common_s livedata_common;
 static livedata_afr_s livedata_afr[AFR_CHANNELS];
 
@@ -61,3 +63,5 @@ static const FragmentEntry fragments[] = {
 FragmentList getFragments() {
 	return { fragments, efi::size(fragments) };
 }
+
+#endif
