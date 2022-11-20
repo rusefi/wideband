@@ -140,7 +140,7 @@ static float AuxGetInputSignal(int sel)
 }
 
 /* TODO: merge with some other communication thread? */
-static THD_WORKING_AREA(waAuxOutThread, 256);
+static THD_WORKING_AREA(waAuxOutThread, 512);
 void AuxOutThread(void*)
 {
     const auto cfg = GetConfiguration();
