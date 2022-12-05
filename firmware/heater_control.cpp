@@ -48,8 +48,8 @@ static struct heater_state state[AFR_CHANNELS] =
 {
     {
         .heaterPid = Pid(
-            0.3f,      // kP
-            0.3f,      // kI
+            0.03f,      // kP
+            0.03f,      // kI
             0.01f,     // kD
             3.0f,      // Integrator clamp (volts)
             HEATER_CONTROL_PERIOD
