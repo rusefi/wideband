@@ -28,6 +28,7 @@ void SamplingUpdateLiveData()
         data->pumpCurrentTarget = GetPumpCurrent(ch);
         data->pumpCurrentMeasured = GetPumpNominalCurrent(ch);
         data->heaterDuty = GetHeaterDuty(ch);
+        data->internalResistance = GetSensorInternalResistance(ch);
         data->fault = (uint8_t)GetCurrentFault(ch);
         data->heaterState = (uint8_t)GetHeaterState(ch);
     }
