@@ -114,7 +114,7 @@ void Sampler::ApplySample(AnalogChannelResult& result, float virtualGroundVoltag
         (1 - PUMP_FILTER_ALPHA) * pumpCurrentSenseVoltage +
         PUMP_FILTER_ALPHA * (result.PumpCurrentVoltage - virtualGroundVoltageInt);
 
-#ifdef BOARD_HAS_VOLTAGE_SENSE
+#ifdef HEATER_INPUT_DIVIDER
     internalHeaterVoltage = result.HeaterSupplyVoltage;
 #endif
 
