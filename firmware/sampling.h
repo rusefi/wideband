@@ -9,7 +9,9 @@ struct ISampler
     virtual float GetNernstDc() const = 0;
     virtual float GetNernstAc() const = 0;
     virtual float GetPumpNominalCurrent() const = 0;
+#ifdef HEATER_INPUT_DIVIDER
     virtual float GetInternalHeaterVoltage() const = 0;
+#endif
     virtual float GetSensorTemperature() const = 0;
     virtual float GetSensorInternalResistance() const = 0;
 };
@@ -25,7 +27,9 @@ public:
     float GetNernstDc() const override;
     float GetNernstAc() const override;
     float GetPumpNominalCurrent() const override;
+#ifdef HEATER_INPUT_DIVIDER
     float GetInternalHeaterVoltage() const override;
+#endif
     float GetSensorTemperature() const override;
     float GetSensorInternalResistance() const override;
 
