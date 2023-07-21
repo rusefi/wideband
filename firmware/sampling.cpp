@@ -38,21 +38,15 @@ float Sampler::GetPumpNominalCurrent() const
     return pumpCurrentSenseVoltage * ratio;
 }
 
+#ifdef HEATER_INPUT_DIVIDER
+// Dual HW can measure heater voltage for each channel
+// by measuring voltage on Heater- while FET is off
 float Sampler::GetInternalHeaterVoltage() const
 {
-#ifdef HEATER_INPUT_DIVIDER
-    // Dual HW can measure heater voltage for each channel
-    // by measuring voltage on Heater- while FET is off
     return internalHeaterVoltage;
-#else
-    // After 5 seconds, pretend that we get battery voltage.
-    // This makes the controller usable without CAN control
-    // enabling the heater - CAN message will be able to keep
-    // it disabled, but if no message ever arrives, this will
-    // start heating.
-    return m_startupTimer.hasElapsedSec(5) ? 13 : 0;
-#endif
+
 }
+#endif
 
 float Sampler::GetSensorTemperature() const
 {
