@@ -37,7 +37,7 @@ private:
     float nernstDc = 0;
     float pumpCurrentSenseVoltage = 0;
 
-#ifdef BATTERY_INPUT_DIVIDER
+#ifdef HEATER_INPUT_DIVIDER
     float internalHeaterVoltage = 0;
 #endif
 
