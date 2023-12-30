@@ -52,7 +52,9 @@ struct StandardData
     uint16_t Lambda;
     uint16_t TemperatureC;
 
-    uint16_t pad;
+    uint8_t pad;
+
+    uint8_t counter;
 };
 
 struct DiagData
@@ -63,7 +65,7 @@ struct DiagData
     Fault Status;
 
     uint8_t HeaterDuty;
-    uint8_t pad;
+    uint8_t counter;
 };
 
 static inline const char* describeFault(Fault fault) {

@@ -139,7 +139,13 @@ void InitCan()
 
 void SendRusefiFormat(uint8_t ch)
 {
+    static uint8_t counter = 0;
     auto baseAddress = WB_DATA_BASE_ADDR + 2 * (ch + configuration->CanIndexOffset);
+
+    if (ch == 0)
+    {
+        counter++;
+    }
 
     const auto& sampler = GetSampler(ch);
     const auto& heater = GetHeaterController(ch);
@@ -158,6 +164,7 @@ void SendRusefiFormat(uint8_t ch)
         bool heaterClosedLoop = heater.IsRunningClosedLoop();
         bool nernstValid = nernstDc > (NERNST_TARGET - 0.1f) && nernstDc < (NERNST_TARGET + 0.1f);
         frame.get().Valid = (heaterClosedLoop && nernstValid) ? 0x01 : 0x00;
+        frame.get().counter = counter;
     }
 
     {
@@ -170,6 +177,7 @@ void SendRusefiFormat(uint8_t ch)
         frame.get().PumpDuty = GetPumpOutputDuty(ch) * 255;
         frame.get().Status = GetCurrentFault(ch);
         frame.get().HeaterDuty = GetHeaterDuty(ch) * 255;
+        frame.get().counter = counter;
     }
 }
 
