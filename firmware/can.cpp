@@ -1,7 +1,9 @@
 #include "hal.h"
 
 #include "can.h"
+#include "can_aemnet.h"
 
+#include "port.h"
 #include "fault.h"
 #include "can_helper.h"
 #include "heater_control.h"
@@ -9,6 +11,7 @@
 #include "sampling.h"
 #include "pump_dac.h"
 #include "port.h"
+#include "max3185x.h"
 
 // this same header is imported by rusEFI to get struct layouts and firmware version
 #include "../for_rusefi/wideband_can.h"
@@ -194,4 +197,5 @@ void SendRusefiFormat(uint8_t ch)
 __attribute__((weak)) void SendCanForChannel(uint8_t ch)
 {
     SendRusefiFormat(ch);
+    SendAemNetUEGOFormat(ch);
 }
