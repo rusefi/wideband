@@ -5,6 +5,7 @@
 #include "fault.h"
 #include "can_helper.h"
 #include "can_aemnet.h"
+#include "can_iobox.h"
 #include "heater_control.h"
 #include "lambda_conversion.h"
 #include "sampling.h"
@@ -80,6 +81,11 @@ void CanRxThread(void*)
         if (msg != MSG_OK)
         {
             continue;
+        }
+
+        if (frame.IDE == CAN_IDE_STD)
+        {
+            CanIoBoxRx(&frame);
         }
 
         // Ignore std frames, only listen to ext

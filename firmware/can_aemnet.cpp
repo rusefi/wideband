@@ -12,6 +12,8 @@
 #include "pump_dac.h"
 #include "max3185x.h"
 
+#include "byteswap.h"
+
 // AEMNet protocol
 
 #define AEMNET_UEGO_TX_PERIOD_MS    10

@@ -25,6 +25,7 @@ struct AnalogResult
     #ifdef BOARD_HAS_VOLTAGE_SENSE
     float SupplyVoltage;
     #endif
+    /* TODO: add AUX analog inputs */
 };
 
 // Enable ADCs, configure pins, etc

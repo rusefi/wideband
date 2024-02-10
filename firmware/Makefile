@@ -151,6 +151,7 @@ CPPSRC = $(ALLCPPSRC) \
           can.cpp \
           can_helper.cpp \
           can_aemnet.cpp \
+          can_iobox.cpp \
           fault.cpp \
           lambda_conversion.cpp \
           pwm.cpp \
