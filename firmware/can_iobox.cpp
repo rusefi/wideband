@@ -4,6 +4,8 @@
 #include "can_helper.h"
 #include "can_iobox.h"
 
+#include "port.h"
+#include "auxout.h"
 #include "sampling.h"
 #include "byteswap.h"
 
@@ -166,10 +168,27 @@ int CanIoBoxRx(const CANRxFrame *fr)
 
         return 0;
     }
-    else if ((fr->EID > base + CAN_IOBOX_SET_PWM(0)) &&
-             (fr->EID < base + CAN_IOBOX_SET_PWM(2)))
+    else if ((fr->EID >= base + CAN_IOBOX_SET_PWM(0)) &&
+             (fr->EID <= base + CAN_IOBOX_SET_PWM(2)))
     {
         const iobox_pwm *pwm = reinterpret_cast<const iobox_pwm *>(fr->data8);
+
+        /* Two first channels are mapped to analog outputs */
+        if (fr->EID == base + CAN_IOBOX_SET_PWM(0)) {
+            const auto cfg = GetConfiguration();
+
+            for (size_t n = 0; n < 2; n++) {
+                // if allowed to control DAC output over CAN
+                if (cfg->auxOutputSource[n] != AuxOutputMode::MsIoBox) {
+                    continue;
+                }
+                // off time should be 0
+                if (pwm->ch[n].off == 0) {
+                    // 16 bit
+                    SetAuxDac(n, 5.0 * pwm->ch[n].on / 0xffff);
+                }
+            }
+        }
 
         /* TODO: PWM periods */
         return 0;
@@ -207,4 +226,6 @@ int CanIoBoxTx(void)
             frame.get().adc[i] = CanIoBoxGetAdc(4 + i);
         }
     }
+
+    return 0;
 }

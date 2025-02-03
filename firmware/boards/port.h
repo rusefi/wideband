@@ -45,6 +45,7 @@ enum class AuxOutputMode : uint8_t {
     Lambda1 = 3,
     Egt0 = 4,
     Egt1 = 5,
+    MsIoBox = 6,
 };
 
 class Configuration {
