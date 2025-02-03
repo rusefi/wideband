@@ -80,6 +80,10 @@ static const int8_t auxOutPwmChN[AFR_CHANNELS] = {
 
 void SetAuxDac(size_t channel, float voltage)
 {
+    if (channel >= AFR_CHANNELS) {
+        return;
+    }
+
     voltage = voltage / AUXOUT_GAIN;
     auto duty = voltage / VCC_VOLTS;
     duty = clampF(0, duty, 1);
@@ -112,6 +116,10 @@ static const uint8_t auxOutDacCh[] = {
 
 void SetAuxDac(size_t channel, float voltage)
 {
+    if (channel >= AFR_CHANNELS) {
+        return;
+    }
+
     voltage = voltage / AUXOUT_GAIN;
 
     auxDac.SetVoltage(auxOutDacCh[channel], voltage);
