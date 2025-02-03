@@ -78,7 +78,7 @@ static const int8_t auxOutPwmChN[AFR_CHANNELS] = {
 #endif
 };
 
-void SetAuxDac(int channel, float voltage)
+void SetAuxDac(size_t channel, float voltage)
 {
     voltage = voltage / AUXOUT_GAIN;
     auto duty = voltage / VCC_VOLTS;
@@ -110,7 +110,7 @@ static const uint8_t auxOutDacCh[] = {
 #endif
 };
 
-void SetAuxDac(int channel, float voltage)
+void SetAuxDac(size_t channel, float voltage)
 {
     voltage = voltage / AUXOUT_GAIN;
 

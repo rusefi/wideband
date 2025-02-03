@@ -3,4 +3,4 @@
 #include <cstdint>
 
 void InitAuxDac();
-void SetAuxDac(int channel, float voltage);
+void SetAuxDac(size_t channel, float voltage);
