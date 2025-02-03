@@ -51,4 +51,8 @@ private:
 // Get the sampler for a particular channel
 const ISampler& GetSampler(int ch);
 
+#ifdef BOARD_HAS_VOLTAGE_SENSE
+float GetSupplyVoltage();
+#endif
+
 void StartSampling();

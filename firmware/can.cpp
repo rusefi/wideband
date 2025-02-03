@@ -1,17 +1,15 @@
-#include "can.h"
 #include "hal.h"
 
-#include "can_helper.h"
-#include "can_aemnet.h"
+#include "can.h"
 
-#include "port.h"
 #include "fault.h"
 #include "can_helper.h"
+#include "can_aemnet.h"
 #include "heater_control.h"
 #include "lambda_conversion.h"
 #include "sampling.h"
 #include "pump_dac.h"
-#include "max3185x.h"
+#include "port.h"
 
 // this same header is imported by rusEFI to get struct layouts and firmware version
 #include "../for_rusefi/wideband_can.h"
@@ -24,7 +22,8 @@ void CanTxThread(void*)
     int cycle;
     chRegSetThreadName("CAN Tx");
 
-    systime_t prev = chVTGetSystemTime(); // Current system time.
+    // Current system time.
+    systime_t prev = chVTGetSystemTime();
 
     while(1)
     {
@@ -49,9 +48,14 @@ static void SendAck()
 {
     CANTxFrame frame;
 
-    frame.IDE = CAN_IDE_EXT;
-    frame.EID = WB_ACK;
+#ifdef STM32G4XX
+    frame.common.RTR = 0;
+#else // Not CAN FD
     frame.RTR = CAN_RTR_DATA;
+#endif
+
+    CAN_EXT(frame) = 1;
+    CAN_EID(frame) = WB_ACK;
     frame.DLC = 0;
 
     canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &frame, TIME_INFINITE);
@@ -79,12 +83,12 @@ void CanRxThread(void*)
         }
 
         // Ignore std frames, only listen to ext
-        if (frame.IDE != CAN_IDE_EXT)
+        if (!CAN_EXT(frame))
         {
             continue;
         }
 
-        if (frame.DLC == 2 && frame.EID == WB_MGS_ECU_STATUS) {
+        if (frame.DLC == 2 && CAN_ID(frame) == WB_MGS_ECU_STATUS) {
             // This is status from ECU - battery voltage and heater enable signal
 
             // data1 contains heater enable bit
@@ -110,7 +114,7 @@ void CanRxThread(void*)
             }
         }
         // If it's a bootloader entry request, reboot to the bootloader!
-        else if ((frame.DLC == 0 || frame.DLC == 1) && frame.EID == WB_BL_ENTER)
+        else if ((frame.DLC == 0 || frame.DLC == 1) && CAN_ID(frame) == WB_BL_ENTER)
         {
             // If 0xFF (force update all) or our ID, reset to bootloader, otherwise ignore
             if (frame.DLC == 0 || frame.data8[0] == 0xFF || frame.data8[0] == GetConfiguration()->afr[0].RusEfiIdOffset)
@@ -124,7 +128,7 @@ void CanRxThread(void*)
             }
         }
         // Check if it's an "index set" message
-        else if (frame.DLC == 1 && frame.EID == WB_MSG_SET_INDEX)
+        else if (frame.DLC == 1 && CAN_ID(frame) == WB_MSG_SET_INDEX)
         {
             int offset = frame.data8[0];
             configuration = GetConfiguration();
@@ -159,25 +163,25 @@ void InitCan()
     chThdCreateStatic(waCanRxThread, sizeof(waCanRxThread), NORMALPRIO - 4, CanRxThread, nullptr);
 }
 
-static int LambdaIsValid(int ch)
-{
-    const auto& sampler = GetSampler(ch);
-    const auto& heater = GetHeaterController(ch);
-
-    float nernstDc = sampler.GetNernstDc();
-
-    return ((heater.IsRunningClosedLoop()) &&
-            (nernstDc > (NERNST_TARGET - 0.1f)) &&
-            (nernstDc < (NERNST_TARGET + 0.1f)));
-}
-
 void SendRusefiFormat(uint8_t ch)
 {
     auto baseAddress = WB_DATA_BASE_ADDR + configuration->afr[ch].RusEfiIdOffset;
 
     const auto& sampler = GetSampler(ch);
+    const auto& heater = GetHeaterController(ch);
 
-    float nernstDc = sampler.GetNernstDc();
+    auto nernstDc = sampler.GetNernstDc();
+    auto pumpDuty = GetPumpOutputDuty(ch);
+    auto lambda = GetLambda(ch);
+
+    // Lambda is valid if:
+    // 1. Nernst voltage is near target
+    // 2. Pump driver isn't slammed in to the stop
+    // 3. Lambda is >0.6 (sensor isn't specified below that)
+    bool lambdaValid =
+            nernstDc > (NERNST_TARGET - 0.1f) && nernstDc < (NERNST_TARGET + 0.1f) &&
+            pumpDuty > 0.1f && pumpDuty < 0.9f &&
+            lambda > 0.6f;
 
     if (configuration->afr[ch].RusEfiTx) {
         CanTxTyped<wbo::StandardData> frame(baseAddress + 0);
@@ -185,20 +189,19 @@ void SendRusefiFormat(uint8_t ch)
         // The same header is imported by the ECU and checked against this data in the frame
         frame.get().Version = RUSEFI_WIDEBAND_VERSION;
 
-        uint16_t lambda = GetLambda(ch) * 10000;
-        frame.get().Lambda = lambda;
+        uint16_t lambdaInt = lambdaValid ? (lambda * 10000) : 0;
+        frame.get().Lambda = lambdaInt;
         frame.get().TemperatureC = sampler.GetSensorTemperature();
-        frame.get().Valid = LambdaIsValid(ch) ? 0x01 : 0x00;
+        bool heaterClosedLoop = heater.IsRunningClosedLoop();
+        frame.get().Valid = (heaterClosedLoop && lambdaValid) ? 0x01 : 0x00;
     }
 
     if (configuration->afr[ch].RusEfiTxDiag) {
-        auto esr = sampler.GetSensorInternalResistance();
+        CanTxTyped<wbo::DiagData> frame(baseAddress + 1);;
 
-        CanTxTyped<wbo::DiagData> frame(baseAddress + 1);
-
-        frame.get().Esr = esr;
+        frame.get().Esr = sampler.GetSensorInternalResistance();
         frame.get().NernstDc = nernstDc * 1000;
-        frame.get().PumpDuty = GetPumpOutputDuty(ch) * 255;
+        frame.get().PumpDuty = pumpDuty * 255;
         frame.get().Status = GetCurrentFault(ch);
         frame.get().HeaterDuty = GetHeaterDuty(ch) * 255;
     }
@@ -216,5 +219,5 @@ __attribute__((weak)) void SendCanEgtForChannel(uint8_t ch)
 #if (EGT_CHANNELS > 0)
     // TODO: implement RusEFI protocol?
     SendAemNetEGTFormat(ch);
-#endif /* EGT_CHANNELS > 0 */
+#endif
 }

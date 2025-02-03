@@ -5,8 +5,18 @@
 
 using namespace wbo;
 
+static const PidConfig heaterPidConfig =
+{
+    .kP = 0.3f,      // kP
+    .kI = 0.3f,      // kI
+    .kD = 0.01f,     // kD
+    .clamp = 3.0f,      // Integrator clamp (volts)
+    .periodMs = HEATER_CONTROL_PERIOD,
+};
+
 HeaterControllerBase::HeaterControllerBase(int ch, int preheatTimeSec, int warmupTimeSec)
-    : ch(ch)
+    : m_pid(heaterPidConfig)
+    , ch(ch)
     , m_preheatTimeSec(preheatTimeSec)
     , m_warmupTimeSec(warmupTimeSec)
 {
@@ -123,9 +133,19 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
 
             break;
         case HeaterState::ClosedLoop:
+            // Check that the sensor's ESR is acceptable for normal operation
+            if (sensorTemp <= overheatTemp)
+            {
+                m_overheatTimer.reset();
+            }
+
+            if (sensorTemp >= underheatTemp)
+            {
+                m_underheatTimer.reset();
+            }
+
             if (m_closedLoopStableTimer.hasElapsedSec(HEATER_CLOSED_LOOP_STAB_TIME)) {
-                // Check that the sensor's ESR is acceptable for normal operation
-                if (sensorTemp > overheatTemp)
+                if (m_overheatTimer.hasElapsedSec(0.5f))
                 {
                     SetFault(ch, Fault::SensorOverheat);
                     // retry after timeout
@@ -133,7 +153,7 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
                     m_retryTimer.reset();
                     return HeaterState::Stopped;
                 }
-                else if (sensorTemp < underheatTemp)
+                else if (m_underheatTimer.hasElapsedSec(0.5f))
                 {
                     SetFault(ch, Fault::SensorUnderheat);
                     // retry after timeout
@@ -185,7 +205,7 @@ float HeaterControllerBase::GetVoltageForState(HeaterState state, float sensorEs
             // Negated because lower resistance -> hotter
 
             // TODO: heater PID should operate on temperature, not ESR
-            return 7.5f - heaterPid.GetOutput(m_targetEsr, sensorEsr);
+            return 7.5f - m_pid.GetOutput(m_targetEsr, sensorEsr);
         case HeaterState::Stopped:
             // Something has gone wrong, turn off the heater.
             return 0;
@@ -204,10 +224,12 @@ void HeaterControllerBase::Update(const ISampler& sampler, HeaterAllow heaterAll
     float sensorEsr = sampler.GetSensorInternalResistance();
     float sensorTemperature = sampler.GetSensorTemperature();
 
-    #ifdef HEATER_INPUT_DIVIDER
+    #if defined(HEATER_INPUT_DIVIDER)
         // if board has ability to measure heater supply localy - use it
         float heaterSupplyVoltage = sampler.GetInternalHeaterVoltage();
-    #else
+    #elif defined(BOARD_HAS_VOLTAGE_SENSE)
+        float heaterSupplyVoltage = GetSupplyVoltage();
+    #else // not BOARD_HAS_VOLTAGE_SENSE
         // this board rely on measured voltage from ECU
         float heaterSupplyVoltage = GetRemoteBatteryVoltage();
     #endif

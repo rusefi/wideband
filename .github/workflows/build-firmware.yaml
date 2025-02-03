@@ -12,10 +12,10 @@ jobs:
       matrix:
         include:
           - build-target: f0_module
-          - build-target: f1_rev2
-          - build-target: f1_rev3
-          - build-target: f1_dual
-          - build-target: f1_dual_rev1
+          # - build-target: f1_rev2
+          # - build-target: f1_rev3
+          # - build-target: f1_dual
+          # - build-target: f1_dual_rev1
 
     steps:
       - uses: actions/checkout@v1
@@ -44,7 +44,7 @@ jobs:
         run: ./build_wideband.sh
 
       - name: Attach binaries
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Wideband ${{matrix.build-target}}
           path: ./firmware/deliver/${{matrix.build-target}}/wideband*

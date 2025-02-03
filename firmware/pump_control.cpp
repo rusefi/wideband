@@ -11,15 +11,33 @@ struct pump_control_state {
     Pid pumpPid;
 };
 
+PidConfig pumpPidConfig = {
+    .kP = 50,
+    .kI = 10000,
+    .kD = 0,
+    .clamp = 10,
+    .periodMs = 2,
+};
+
 static struct pump_control_state state[AFR_CHANNELS] =
 {
     {
-        Pid(50.0f, 10000.0f, 0.0f, 10.0f, 2),
+        Pid(pumpPidConfig),
     },
-#if (AFR_CHANNELS > 1)
+#if (AFR_CHANNELS >= 2)
     {
-        Pid(50.0f, 10000.0f, 0.0f, 10.0f, 2),
-    }
+        Pid(pumpPidConfig),
+    },
+#endif
+#if (AFR_CHANNELS >= 3)
+    {
+        Pid(pumpPidConfig),
+    },
+#endif
+#if (AFR_CHANNELS >= 4)
+    {
+        Pid(pumpPidConfig),
+    },
 #endif
 };
 
@@ -37,12 +55,9 @@ static void PumpThread(void*)
             const auto& sampler = GetSampler(ch);
             const auto& heater = GetHeaterController(ch);
 
-            // Only actuate pump when running closed loop!
+            // Only actuate pump when hot enough to not hurt the sensor
             if (heater.IsRunningClosedLoop() ||
-#ifdef START_PUMP_TEMP_OFFSET
-                (sampler.GetSensorTemperature() >= heater.GetTargetTemp() - START_PUMP_TEMP_OFFSET) ||
-#endif
-                (0))
+                (sampler.GetSensorTemperature() >= heater.GetTargetTemp() - START_PUMP_TEMP_OFFSET))
             {
                 float nernstVoltage = sampler.GetNernstDc();
 

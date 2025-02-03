@@ -1,0 +1,32 @@
+1b7a76d504d204ed32540f283bd6e512de5a326c (my/master, master) Nernst clamp detection: dummy for all not dual_rev1 boards
+
+67f543d0424fefcf93e9789beb973fc69f61e5a1 sampler: fix tests
+~~~5148f67793b10c751dcca6c68c27b7d1e3b02e76 OpneBLT: switch to my repo
+~~~c49c572035ac2d53d6bbb1bdd88fe8a7c5c706bc openbtl: f1_dual_rev1: enable OpenBLT on USART2 (Bluetooth)
+bc8217dc428ceb741de5bb6fd0190fe7ac24f8ec sampling: fix reported Nerst resistance in case of clamped signal
+51e58076427905472dd1083f66698be09572b99a sampling: do not try to calculate ESR if NerstAc is clamped 2
+142afee486c11df8f665c3ba51b209a6955f6123 build: fix hex file generation again
+~40c996fbe1f6f8b0702b59638a371d12d9fa7f03 Revert "sampling: do not try to calculate ESR if NerstAc is clamped"
+937b7fb7e431ef4256f6e6ac7a74b59e5b810b9a sampling: fix nernstClamped unitialized
++6441a390912ac46219ad4abf1b39b493f7f66505 TS: send Ok response on Reset/Reboot commands to make TS happy
+e555b52253a70e3396601d693351f259173a8fec Add reset to DFU script
+5e1395005ffa4d8e77cf6406ee884b198494e78a Fix reset to DFU command
+ac04b50e20b0048beedf99b5ed3db87e9cd5dcb9 build: fix hex file generation
+-f71f3864d95a98ce5a8bfda4f626c907ce1cafce Reduce heater supply stabilization delay from 3s to 0.5s
+871116fec25cb58e83b7acf38c469dd39ba63a55 heater: shortcut if sensor is hot enougth
+ed2e5b7a02a427aec149461e7de44249d690ec50 heater: always rely on localy measured heater voltage
+11ace408744ea3048957710804a1398d43fead44 sampling, heater: fix Battery vs Heater naming mess
++ 79decc0c9a51ce523ffdabe292d586c9bb603f8d fix f1_dual_rev1
++ 1026b7964242e2bb90d97b5ab91fe69cf64bf5bf f1_dual: fix Heater vs Battery naming mess
++ 59371ef765a0df384e0275a78db379d6771e190f f1_dual_rev1: fix Heater vs Battery naming mess
+eb40db8bd794910fda10a498f00a4598884629ca Rename GetInternalBatteryVoltage() to GetInternalHeaterVoltage()
+- 58d9f441b15ffab9b1b039513178a421db532d40 lambda: getPhy for LSU ADV
+4f697a9c02b1f954806559845585caf4704cb9d3 livedata: show Nernst voltage
+8e70800e5751cc69d6717645a0cc1bf112737a4d livedata: show per-channel heater supply voltage
+b9a276fe64ecea0e758d3c70572844f75080dbff TODO
+bb4325419684ac1b729c17e0de4f66ddfb9c42f7 f1_dual: select bigger Vbat voltage from two heater voltages
+7c8e9b0271d138e4afe353272b6219c4c05ef91a heater_control: report SensorNoHeatSupply if no supply
+b64c3d7d137557baa24176bc903e012c6f7cbe42 heater_control: retry heating attempt after timeout
+dbc218f5f45abda58eaa310b3134e7e7a3cc0f96 sampling: do not try to calculate ESR if NerstAc is clamped
+- 30c20cf5fe0c88289dd0260ddba9fa1bc87e077a heater_control: do not preheat on low voltages
+1e3bf3305952ab833e11a542a53033a30d633834 heater: 5 sec stabilization time after switching to closed loop

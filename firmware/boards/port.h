@@ -21,9 +21,14 @@ struct AnalogResult
 {
     AnalogChannelResult ch[AFR_CHANNELS];
     float VirtualGroundVoltageInt;
-    /* TODO: add SupplyVoltage - some boards can measure supply voltage */
+
+    #ifdef BOARD_HAS_VOLTAGE_SENSE
+    float SupplyVoltage;
+    #endif
 };
 
+// Enable ADCs, configure pins, etc
+void PortPrepareAnalogSampling();
 AnalogResult AnalogSample();
 
 enum class SensorType : uint8_t {

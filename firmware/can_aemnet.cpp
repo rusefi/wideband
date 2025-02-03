@@ -36,9 +36,7 @@ struct UEGOData
     uint8_t Flags;
     // [6] - Sensor Fault
     uint8_t Faults;
-};
-// TODO!!!
-// __attribute__((packed));
+} __attribute__((packed));
 
 static_assert(sizeof(UEGOData) == 8);
 
@@ -52,9 +50,7 @@ struct EgtData
     // 1 degC/bit, 0 to 65535 degC
     beuint16_t TemperatureC;
     uint8_t pad[6];
-};
-//TODO!!!!
-// __attribute__((packed));
+} __attribute__((packed));
 
 static_assert(sizeof(EgtData) == 8);
 
