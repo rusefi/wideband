@@ -203,4 +203,9 @@ void InitAuxDac()
 {
 }
 
+
+void SetAuxDac(size_t, float)
+{
+}
+
 #endif
