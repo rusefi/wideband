@@ -147,7 +147,7 @@ void SetConfiguration()
     );
 }
 
-void ResetConfiguration();
+void ResetConfiguration(uint16_t option)
 {
     // NOP
 }

@@ -204,7 +204,7 @@ static void handleBurnCommand(TsChannelBase* tsChannel, ts_response_format_e mod
 	sendResponseCode(mode, tsChannel, TS_RESPONSE_BURN_OK);
 }
 
-static void handleIoTestCommand(TsChannelBase* tsChannel, ts_response_format_e mode, uint16_t subsystem, uint16_t /* index */) {
+static void handleIoTestCommand(TsChannelBase* tsChannel, ts_response_format_e mode, uint16_t subsystem, uint16_t index) {
 	/* index is not used yet */
 
 	switch (subsystem) {
@@ -232,7 +232,7 @@ static void handleIoTestCommand(TsChannelBase* tsChannel, ts_response_format_e m
 		break;
 
 	case 0xbd:
-		ResetConfiguration();
+		ResetConfiguration(index);
 		SetConfiguration();
 		/* Send ok to make TS happy, wait until sent */
 		sendOkResponse(tsChannel, TS_CRC);

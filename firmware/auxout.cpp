@@ -166,6 +166,9 @@ void AuxOutThread(void*)
     {
         for (int ch = 0; ch < AFR_CHANNELS; ch++)
         {
+            if (cfg->auxOutputSource[ch] == AuxOutputMode::MsIoBox)
+                continue;
+
             float input = AuxGetInputSignal(cfg->auxOutputSource[ch]);
             float voltage = interpolate2d(input, cfg->auxOutBins[ch], cfg->auxOutValues[ch]);
 

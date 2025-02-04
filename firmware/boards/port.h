@@ -61,6 +61,7 @@ public:
         return this->Tag == ExpectedTag;
     }
     void LoadDefaults();
+    void LoadDefaults(uint16_t option);
 
     // Actual configuration data
     union {
@@ -127,7 +128,7 @@ static_assert(sizeof(Configuration) == 256);
 int InitConfiguration();
 Configuration* GetConfiguration();
 void SetConfiguration();
-void ResetConfiguration();
+void ResetConfiguration(uint16_t option);
 
 /* TS stuff */
 uint8_t *GetConfigurationPtr();

@@ -52,8 +52,6 @@ static Configuration cfg;
 // Configuration defaults
 void Configuration::LoadDefaults()
 {
-    int i;
-
     *this = {};
 
     NoLongerUsed0 = 0;
@@ -61,14 +59,14 @@ void Configuration::LoadDefaults()
 
     /* default auxout curve is 0..5V for AFR 8.5 to 18.0
      * default auxout[n] input is AFR[n] */
-    for (i = 0; i < 8; i++) {
+    for (size_t i = 0; i < 8; i++) {
         auxOutBins[0][i] = auxOutBins[1][i] = 8.5 + (18.0 - 8.5) / 7 * i;
         auxOutValues[0][i] = auxOutValues[1][i] = 0.0 + (5.0 - 0.0) / 7 * i;
     }
     auxOutputSource[0] = AuxOutputMode::Afr0;
     auxOutputSource[1] = AuxOutputMode::Afr1;
 
-    for (i = 0; i < AFR_CHANNELS; i++) {
+    for (size_t i = 0; i < AFR_CHANNELS; i++) {
         // enable RusEFI protocol
         afr[i].RusEfiTx = true;
         afr[i].RusEfiTxDiag = true;
@@ -79,7 +77,7 @@ void Configuration::LoadDefaults()
         afr[i].AemNetIdOffset = i;
     }
 
-    for (i = 0; i < EGT_CHANNELS; i++) {
+    for (size_t i = 0; i < EGT_CHANNELS; i++) {
         // disable RusEFI protocol - not implemented
         egt[i].RusEfiTx = false;
         egt[i].RusEfiTxDiag = false;
@@ -100,6 +98,64 @@ void Configuration::LoadDefaults()
     Tag = ExpectedTag;
 }
 
+void Configuration::LoadDefaults(uint16_t option)
+{
+    LoadDefaults();
+
+    // Override default with specific options
+    switch (option) {
+    case 0:
+        //nop
+        break;
+    case 1:
+        // AEM protocol AFR + EGT
+        for (size_t i = 0; i < EGT_CHANNELS; i++) {
+            egt[i].AemNetTx = true;
+        }
+        for (size_t i = 0; i < AFR_CHANNELS; i++) {
+            afr[i].RusEfiTx = false;
+            afr[i].RusEfiTxDiag = false;
+            afr[i].AemNetTx = true;
+        }
+        break;
+    case 2:
+        // AEM AFR only
+        for (size_t i = 0; i < EGT_CHANNELS; i++) {
+            egt[i].AemNetTx = false;
+        }
+        for (size_t i = 0; i < AFR_CHANNELS; i++) {
+            afr[i].RusEfiTx = false;
+            afr[i].RusEfiTxDiag = false;
+            afr[i].AemNetTx = true;
+        }
+        break;
+    case 16:
+    case 17:
+    case 18:
+        // DAC over can using MS IO Box protocol (rx only)
+        auxOutputSource[0] = auxOutputSource[1] = AuxOutputMode::MsIoBox;
+        for (size_t i = 0; i < EGT_CHANNELS; i++) {
+            egt[i].AemNetTx = false;
+        }
+        for (size_t i = 0; i < AFR_CHANNELS; i++) {
+            afr[i].RusEfiTx = false;
+            afr[i].RusEfiTxDiag = false;
+            afr[i].AemNetTx = false;
+        }
+        if (option - 16 < 3) {
+            iobox.idx = option - 16;
+        } else {
+            // custom CAN ID
+            iobox.idx = 3;
+        }
+        iobox.EID = 0x200 + 0x20 * (option - 16);
+        iobox.enable_rx = 1;
+        break;
+    default:
+        break;
+    }
+}
+
 int InitConfiguration()
 {
     size_t size = GetConfigurationSize();
@@ -117,7 +173,7 @@ int InitConfiguration()
     err = mfsReadRecord(&mfs1, MFS_CONFIGURATION_RECORD_ID, &size, GetConfigurationPtr());
     if ((err != MFS_NO_ERROR) || (size != GetConfigurationSize() || !cfg.IsValid())) {
         /* load defaults */
-        cfg.LoadDefaults();
+        cfg.LoadDefaults(0);
     }
 
     return 0;
@@ -133,9 +189,9 @@ void SetConfiguration()
     SaveConfiguration();
 }
 
-void ResetConfiguration()
+void ResetConfiguration(uint16_t option)
 {
-    cfg.LoadDefaults();
+    cfg.LoadDefaults(option);
 }
 
 /* TS stuff */
