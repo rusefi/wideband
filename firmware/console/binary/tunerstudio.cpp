@@ -231,6 +231,14 @@ static void handleIoTestCommand(TsChannelBase* tsChannel, ts_response_format_e m
 		rebootToOpenblt();
 		break;
 
+	case 0xbd:
+		ResetConfiguration();
+		SetConfiguration();
+		/* Send ok to make TS happy, wait until sent */
+		sendOkResponse(tsChannel, TS_CRC);
+		chThdSleepMilliseconds(100);
+		rebootNow();
+
 	default:
 		tunerStudioError(tsChannel, "Unexpected IoTest command");
 	}

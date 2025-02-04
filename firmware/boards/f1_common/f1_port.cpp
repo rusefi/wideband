@@ -90,6 +90,12 @@ void Configuration::LoadDefaults()
         egt[i].AemNetIdOffset = i;
     }
 
+    iobox.idx = 0;
+    iobox.enable_rx = 0;
+    iobox.enable_tx = 0;
+    iobox.IDE = CAN_IDE_STD;
+    iobox.SID = 0x200;
+
     /* Finaly */
     Tag = ExpectedTag;
 }
@@ -125,6 +131,11 @@ Configuration* GetConfiguration()
 void SetConfiguration()
 {
     SaveConfiguration();
+}
+
+void ResetConfiguration()
+{
+    cfg.LoadDefaults();
 }
 
 /* TS stuff */

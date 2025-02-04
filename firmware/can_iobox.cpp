@@ -84,15 +84,31 @@ struct iobox_adc57 {
 
 static_assert(sizeof(iobox_adc57) == 8);
 
-// TODO: move to configuration
-static const uint32_t iobox_index = 0;
-
 static bool configured = false;
 
 static uint8_t pwm_mask = 0x00;
 static uint8_t tachin_mask = 0x00;
 static uint8_t adc_broadcast_interval = 20;
 static uint8_t tach_broadcast_interval = 20;
+
+static uint32_t CanIoBoxBaseId()
+{
+    const auto cfg = GetConfiguration();
+
+    // three standart IDs
+    if (cfg->iobox.idx <= 2) {
+        return (CAN_IOBOX_BASE0 + cfg->iobox.idx * 0x20);
+    }
+
+    return ((cfg->iobox.IDE == CAN_IDE_STD) ? cfg->iobox.SID : cfg->iobox.EID);
+}
+
+static uint8_t CanIoBoxIde()
+{
+    const auto cfg = GetConfiguration();
+
+    return cfg->iobox.IDE;
+}
 
 /*
  * TODO: validate
@@ -133,16 +149,27 @@ static uint16_t CanIoBoxGetAdc(size_t index)
 
 int CanIoBoxRx(const CANRxFrame *fr)
 {
-    const uint32_t base = CAN_IOBOX_BASE0 + iobox_index * 0x20;
+    const auto cfg = GetConfiguration();
 
-    if (fr->IDE != CAN_IDE_STD)
+    if (!cfg->iobox.enable_rx)
         return 0;
 
-    if ((fr->EID < base) ||
-        (fr->EID > base + CAN_IOBOX_LAST_IN))
+    if (CanIoBoxIde() != fr->IDE)
         return 0;
 
-    if ((fr->EID == base + CAN_IOBOX_PING) && (fr->DLC == 0))
+    const uint32_t base = CanIoBoxBaseId();
+    uint32_t id;
+    if (fr->IDE == CAN_IDE_STD) {
+        id = fr->SID;
+    } else {
+        id = fr->EID;
+    }
+
+    if ((id < base) ||
+        (id > base + CAN_IOBOX_LAST_IN))
+        return 0;
+
+    if ((id == base + CAN_IOBOX_PING) && (fr->DLC == 0))
     {
         CanTxTyped<iobox_whoami> frame(base + CAN_IOBOX_WHOAMI, false);
 
@@ -154,7 +181,7 @@ int CanIoBoxRx(const CANRxFrame *fr)
 
         return 0;
     }
-    else if (fr->EID == base + CAN_IOBOX_CONFIG)
+    else if ((id == base + CAN_IOBOX_CONFIG) && (fr->DLC == sizeof(iobox_cfg)))
     {
         const iobox_cfg *cfg = reinterpret_cast<const iobox_cfg *>(fr->data8);
 
@@ -168,24 +195,25 @@ int CanIoBoxRx(const CANRxFrame *fr)
 
         return 0;
     }
-    else if ((fr->EID >= base + CAN_IOBOX_SET_PWM(0)) &&
-             (fr->EID <= base + CAN_IOBOX_SET_PWM(2)))
+    else if ((id >= base + CAN_IOBOX_SET_PWM(0)) &&
+             (id <= base + CAN_IOBOX_SET_PWM(2)) &&
+             (fr->DLC == sizeof(iobox_pwm)))
     {
         const iobox_pwm *pwm = reinterpret_cast<const iobox_pwm *>(fr->data8);
 
         /* Two first channels are mapped to analog outputs */
         if (fr->EID == base + CAN_IOBOX_SET_PWM(0)) {
-            const auto cfg = GetConfiguration();
-
             for (size_t n = 0; n < 2; n++) {
                 // if allowed to control DAC output over CAN
                 if (cfg->auxOutputSource[n] != AuxOutputMode::MsIoBox) {
                     continue;
                 }
-                // off time should be 0
-                if (pwm->ch[n].off == 0) {
-                    // 16 bit
-                    SetAuxDac(n, 5.0 * pwm->ch[n].on / 0xffff);
+
+                uint32_t period = pwm->ch[n].off + pwm->ch[n].on;
+                if (period == 0) {
+                    SetAuxDac(n, 0);
+                } else {
+                    SetAuxDac(n, 5.0 * pwm->ch[n].on / period);
                 }
             }
         }
@@ -193,7 +221,8 @@ int CanIoBoxRx(const CANRxFrame *fr)
         /* TODO: PWM periods */
         return 0;
     }
-    else if (fr->EID == base + CAN_IOBOX_SET_PWM(3))
+    else if ((id == base + CAN_IOBOX_SET_PWM(3)) &&
+             (fr->DLC == sizeof(iobox_pwm_last)))
     {
         const iobox_pwm_last *pwm = reinterpret_cast<const iobox_pwm_last *>(fr->data8);
 
@@ -207,10 +236,15 @@ int CanIoBoxRx(const CANRxFrame *fr)
 
 int CanIoBoxTx(void)
 {
+    const auto cfg = GetConfiguration();
+
+    if (!cfg->iobox.enable_tx)
+        return 0;
+
     if (!configured)
         return 0;
 
-    const uint32_t base = CAN_IOBOX_BASE0 + iobox_index * 0x20;
+    const uint32_t base = CanIoBoxBaseId();
 
     if (1) {
         CanTxTyped<iobox_adc14> frame(base + CAN_IOBOX_ADC14, false);

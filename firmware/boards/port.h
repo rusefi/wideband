@@ -94,6 +94,27 @@ public:
                 uint8_t AemNetIdOffset;
                 uint8_t pad[5];
             } egt[2];
+
+            // MS IO Box protocol settings
+            struct {
+                // MS IO Box index: 0, 1 or 2, else custom SID/EID is used.
+                uint8_t idx;
+                uint8_t enable_rx:1;
+                uint8_t enable_tx:1;
+                // Identifier type: CAN_IDE_STD or CAN_IDE_EXT
+                uint8_t IDE:1;
+                uint8_t pad[3];
+                union {
+                    struct {
+                        // CAN_IDE_STD
+                        uint32_t SID:11;
+                    };
+                    struct {
+                        // Extended identifier
+                        uint32_t EID:29;
+                    };
+                };
+            } iobox __attribute__((packed));
         } __attribute__((packed));
 
         // pad to 256 bytes including tag
@@ -101,9 +122,12 @@ public:
     };
 };
 
+static_assert(sizeof(Configuration) == 256);
+
 int InitConfiguration();
 Configuration* GetConfiguration();
 void SetConfiguration();
+void ResetConfiguration();
 
 /* TS stuff */
 uint8_t *GetConfigurationPtr();

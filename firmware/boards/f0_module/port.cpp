@@ -147,6 +147,11 @@ void SetConfiguration()
     );
 }
 
+void ResetConfiguration();
+{
+    // NOP
+}
+
 SensorType GetSensorType()
 {
     return SensorType::LSU49;
