@@ -85,7 +85,7 @@ public:
             // enable RusEFI protocol
             afr[i].RusEfiTx = true;
             afr[i].RusEfiTxDiag = true;
-            afr[i].RusEfiIdOffset = 2 * i;
+            afr[i].RusEfiIdx = i;
 
             // Disable AemNet
             afr[i].AemNetTx = false;
@@ -96,7 +96,7 @@ public:
             // disable RusEFI protocol - not implemented
             egt[i].RusEfiTx = false;
             egt[i].RusEfiTxDiag = false;
-            egt[i].RusEfiIdOffset = i;
+            egt[i].RusEfiIdx = i;
 
             // Enable AemNet
             egt[i].AemNetTx = true;
@@ -124,7 +124,7 @@ public:
                 bool RusEfiTxDiag:1;
                 bool AemNetTx:1;
 
-                uint8_t RusEfiIdOffset;
+                uint8_t RusEfiIdx;
                 uint8_t AemNetIdOffset;
                 uint8_t pad[5];
             } afr[MAX_AFR_CHANNELS];
@@ -135,7 +135,7 @@ public:
                 bool RusEfiTxDiag:1;
                 bool AemNetTx:1;
 
-                uint8_t RusEfiIdOffset;
+                uint8_t RusEfiIdx;
                 uint8_t AemNetIdOffset;
                 uint8_t pad[5];
             } egt[MAX_EGT_CHANNELS];
