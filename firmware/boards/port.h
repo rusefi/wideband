@@ -37,6 +37,10 @@ enum class SensorType : uint8_t {
     LSUADV = 2,
 };
 
+#ifndef BOARD_DEFAULT_SENSOR_TYPE
+#define BOARD_DEFAULT_SENSOR_TYPE SensorType::LSU49
+#endif
+
 enum class AuxOutputMode : uint8_t {
     Afr0 = 0,
     Afr1 = 1,
@@ -45,6 +49,9 @@ enum class AuxOutputMode : uint8_t {
     Egt0 = 4,
     Egt1 = 5,
 };
+
+#define MAX_AFR_CHANNELS 4
+#define MAX_EGT_CHANNELS 4
 
 class Configuration {
 private:
@@ -58,7 +65,47 @@ public:
     {
         return this->Tag == ExpectedTag;
     }
-    void LoadDefaults();
+
+    // Configuration defaults
+    void LoadDefaults()
+    {
+        NoLongerUsed0 = 0;
+        sensorType = BOARD_DEFAULT_SENSOR_TYPE;
+
+        /* default auxout curve is 0..5V for AFR 8.5 to 18.0
+         * default auxout[n] input is AFR[n] */
+        for (size_t i = 0; i < 8; i++) {
+            auxOutBins[0][i] = auxOutBins[1][i] = 8.5 + (18.0 - 8.5) / 7 * i;
+            auxOutValues[0][i] = auxOutValues[1][i] = 0.0 + (5.0 - 0.0) / 7 * i;
+        }
+        auxOutputSource[0] = AuxOutputMode::Afr0;
+        auxOutputSource[1] = AuxOutputMode::Afr1;
+
+        for (size_t i = 0; i < MAX_AFR_CHANNELS; i++) {
+            // enable RusEFI protocol
+            afr[i].RusEfiTx = true;
+            afr[i].RusEfiTxDiag = true;
+            afr[i].RusEfiIdOffset = 2 * i;
+
+            // Disable AemNet
+            afr[i].AemNetTx = false;
+            afr[i].AemNetIdOffset = i;
+        }
+
+        for (size_t i = 0; i < MAX_EGT_CHANNELS; i++) {
+            // disable RusEFI protocol - not implemented
+            egt[i].RusEfiTx = false;
+            egt[i].RusEfiTxDiag = false;
+            egt[i].RusEfiIdOffset = i;
+
+            // Enable AemNet
+            egt[i].AemNetTx = true;
+            egt[i].AemNetIdOffset = i;
+        }
+
+        /* Finaly */
+        Tag = ExpectedTag;
+    }
 
     // Actual configuration data
     union {
@@ -80,7 +127,7 @@ public:
                 uint8_t RusEfiIdOffset;
                 uint8_t AemNetIdOffset;
                 uint8_t pad[5];
-            } afr[2];
+            } afr[MAX_AFR_CHANNELS];
 
             // per EGT channel settings
             struct {
@@ -91,7 +138,7 @@ public:
                 uint8_t RusEfiIdOffset;
                 uint8_t AemNetIdOffset;
                 uint8_t pad[5];
-            } egt[2];
+            } egt[MAX_EGT_CHANNELS];
         } __attribute__((packed));
 
         // pad to 256 bytes including tag
