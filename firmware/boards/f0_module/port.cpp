@@ -53,6 +53,7 @@ AnalogResult AnalogSample()
                 .NernstVoltage = AverageSamples(adcBuffer, 0) * (1.0 / NERNST_INPUT_GAIN),
                 .PumpCurrentVoltage = AverageSamples(adcBuffer, 1),
                 .HeaterSupplyVoltage = 0,
+                .NernstClamped = false,
             },
         },
         .VirtualGroundVoltageInt = AverageSamples(adcBuffer, 2),
@@ -112,25 +113,30 @@ Configuration* GetConfiguration()
     // If config has been written before, use the stored configuration
     if (cfg.IsValid())
     {
+        // If we have valid config in flash - do not read ID pins, use ID from settings
         config = cfg;
     }
+    else
+    {
+        config.LoadDefaults();
 
-    // Now, override the index with a hardware-strapped option (if present)
-    auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
-    auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
+        // Now, override the index with a hardware-strapped option (if present)
+        auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
+        auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
 
-    // See https://github.com/mck1117/wideband/issues/11 to explain this madness
-    switch (3 * sel1 + sel2) {
-        case 0: config.CanIndexOffset = 2; break;
-        case 1: config.CanIndexOffset = 0; break;
-        case 2: config.CanIndexOffset = 3; break;
-        case 3: config.CanIndexOffset = 4; break;
-        case 4: /* both floating, do nothing */ break;
-        case 5: config.CanIndexOffset = 1; break;
-        case 6: config.CanIndexOffset = 5; break;
-        case 7: config.CanIndexOffset = 6; break;
-        case 8: config.CanIndexOffset = 7; break;
-        default: break;
+        // See https://github.com/mck1117/wideband/issues/11 to explain this madness
+        switch (3 * sel1 + sel2) {
+            case 0: config.afr[0].RusEfiIdx = 2; break;
+            case 1: config.afr[0].RusEfiIdx = 0; break;
+            case 2: config.afr[0].RusEfiIdx = 3; break;
+            case 3: config.afr[0].RusEfiIdx = 4; break;
+            case 4: /* both floating, do nothing */ break;
+            case 5: config.afr[0].RusEfiIdx = 1; break;
+            case 6: config.afr[0].RusEfiIdx = 5; break;
+            case 7: config.afr[0].RusEfiIdx = 6; break;
+            case 8: config.afr[0].RusEfiIdx = 7; break;
+            default: break;
+        }
     }
 
     return &config;

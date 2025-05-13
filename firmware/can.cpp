@@ -4,6 +4,7 @@
 
 #include "fault.h"
 #include "can_helper.h"
+#include "can_aemnet.h"
 #include "heater_control.h"
 #include "lambda_conversion.h"
 #include "sampling.h"
@@ -18,6 +19,7 @@ static Configuration* configuration;
 static THD_WORKING_AREA(waCanTxThread, 512);
 void CanTxThread(void*)
 {
+    int cycle;
     chRegSetThreadName("CAN Tx");
 
     // Current system time.
@@ -25,11 +27,22 @@ void CanTxThread(void*)
 
     while(1)
     {
+        // AFR - 100 Hz
         for (int ch = 0; ch < AFR_CHANNELS; ch++)
         {
             SendCanForChannel(ch);
         }
 
+        // EGT - 20 Hz
+        if ((cycle % 5) == 0)
+        {
+            for (int ch = 0; ch < EGT_CHANNELS; ch++)
+            {
+                SendCanEgtForChannel(ch);
+            }
+        }
+
+        cycle++;
         prev = chThdSleepUntilWindowed(prev, chTimeAddX(prev, TIME_MS2I(WBO_TX_PERIOD_MS)));
     }
 }
@@ -108,7 +121,7 @@ void CanRxThread(void*)
         else if ((frame.DLC == 0 || frame.DLC == 1) && CAN_ID(frame) == WB_BL_ENTER)
         {
             // If 0xFF (force update all) or our ID, reset to bootloader, otherwise ignore
-            if (frame.DLC == 0 || frame.data8[0] == 0xFF || frame.data8[0] == GetConfiguration()->CanIndexOffset)
+            if (frame.DLC == 0 || frame.data8[0] == 0xFF || frame.data8[0] == GetConfiguration()->afr[0].RusEfiIdx)
             {
                 SendAck();
 
@@ -121,8 +134,14 @@ void CanRxThread(void*)
         // Check if it's an "index set" message
         else if (frame.DLC == 1 && CAN_ID(frame) == WB_MSG_SET_INDEX)
         {
+            int offset = frame.data8[0];
             configuration = GetConfiguration();
-            configuration->CanIndexOffset = frame.data8[0];
+            for (int i = 0; i < AFR_CHANNELS; i++) {
+                configuration->afr[i].RusEfiIdx = offset + i;
+            }
+            for (int i = 0; i < EGT_CHANNELS; i++) {
+                configuration->egt[i].RusEfiIdx = offset + i;
+            }
             SetConfiguration();
             SendAck();
         }
@@ -150,7 +169,7 @@ void InitCan()
 
 void SendRusefiFormat(uint8_t ch)
 {
-    auto baseAddress = WB_DATA_BASE_ADDR + 2 * (ch + configuration->CanIndexOffset);
+    auto baseAddress = WB_DATA_BASE_ADDR + 2 * configuration->afr[ch].RusEfiIdx;
 
     const auto& sampler = GetSampler(ch);
     const auto& heater = GetHeaterController(ch);
@@ -168,7 +187,7 @@ void SendRusefiFormat(uint8_t ch)
             pumpDuty > 0.1f && pumpDuty < 0.9f &&
             lambda > 0.6f;
 
-    {
+    if (configuration->afr[ch].RusEfiTx) {
         CanTxTyped<wbo::StandardData> frame(baseAddress + 0);
 
         // The same header is imported by the ECU and checked against this data in the frame
@@ -181,8 +200,8 @@ void SendRusefiFormat(uint8_t ch)
         frame.get().Valid = (heaterClosedLoop && lambdaValid) ? 0x01 : 0x00;
     }
 
-    {
-        CanTxTyped<wbo::DiagData> frame(baseAddress + 1);
+    if (configuration->afr[ch].RusEfiTxDiag) {
+        CanTxTyped<wbo::DiagData> frame(baseAddress + 1);;
 
         frame.get().Esr = sampler.GetSensorInternalResistance();
         frame.get().NernstDc = nernstDc * 1000;
@@ -196,4 +215,13 @@ void SendRusefiFormat(uint8_t ch)
 __attribute__((weak)) void SendCanForChannel(uint8_t ch)
 {
     SendRusefiFormat(ch);
+    SendAemNetUEGOFormat(configuration, ch);
+}
+
+__attribute__((weak)) void SendCanEgtForChannel(uint8_t ch)
+{
+#if (EGT_CHANNELS > 0)
+    // TODO: implement RusEFI protocol?
+    SendAemNetEGTFormat(configuration, ch);
+#endif
 }

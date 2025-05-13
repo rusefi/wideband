@@ -29,6 +29,11 @@ float Sampler::GetNernstAc() const
     return nernstAc;
 }
 
+float Sampler::GetNernstV() const
+{
+    return nernstV;
+}
+
 float Sampler::GetPumpNominalCurrent() const
 {
     // Gain is 10x, then a 61.9 ohm resistor
@@ -77,6 +82,13 @@ float Sampler::GetSensorTemperature() const
 
 float Sampler::GetSensorInternalResistance() const
 {
+    if (nernstClamped)
+    {
+        // TODO: report disconnected error?
+        // Return some non-realistic value
+        return 10000;
+    }
+
     // Sensor is the lowside of a divider, top side is GetESRSupplyR(), and 3.3v AC pk-pk is injected
     float totalEsr = GetESRSupplyR() / (VCC_VOLTS / GetNernstAc() - 1);
 
@@ -94,6 +106,13 @@ void Sampler::ApplySample(AnalogChannelResult& result, float virtualGroundVoltag
 {
     float r_1 = result.NernstVoltage;
 
+    // If value is close to ADC limit...
+    if (result.NernstClamped) {
+        nernstClamped = 100;
+    } else if (nernstClamped) {
+        nernstClamped--;
+    }
+
     // r2_opposite_phase estimates where the previous sample would be had we not been toggling
     // AKA the absolute value of the difference between r2_opposite_phase and r2 is the amplitude
     // of the AC component on the nernst voltage.  We have to pull this trick so as to use the past 3
@@ -104,6 +123,7 @@ void Sampler::ApplySample(AnalogChannelResult& result, float virtualGroundVoltag
     // Compute AC (difference) and DC (average) components
     float nernstAcLocal = f_abs(r2_opposite_phase - r_2);
     nernstDc = (r2_opposite_phase + r_2) / 2;
+    nernstV = result.NernstVoltage;
 
     nernstAc =
         (1 - ESR_SENSE_ALPHA) * nernstAc +

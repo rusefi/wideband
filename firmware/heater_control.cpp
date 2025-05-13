@@ -29,7 +29,8 @@ void HeaterControllerBase::Configure(float targetTempC, float targetEsr)
 
     m_preheatTimer.reset();
     m_warmupTimer.reset();
-    m_batteryStableTimer.reset();
+    m_heaterStableTimer.reset();
+    m_closedLoopStableTimer.reset();
 }
 
 bool HeaterControllerBase::IsRunningClosedLoop() const
@@ -60,15 +61,17 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
     if (heaterAllowState == HeaterAllow::Unknown)
     {
         // measured voltage too low to auto-start heating
-        if (heaterSupplyVoltage < HEATER_BATTETY_OFF_VOLTAGE)
+        if (heaterSupplyVoltage < HEATER_SUPPLY_OFF_VOLTAGE)
         {
-            m_batteryStableTimer.reset();
+            m_heaterStableTimer.reset();
+            // set fault
+            SetFault(ch, Fault::SensorNoHeatSupply);
             return HeaterState::NoHeaterSupply;
         }
-        else if (heaterSupplyVoltage > HEATER_BATTERY_ON_VOLTAGE)
+        else if (heaterSupplyVoltage > HEATER_SUPPLY_ON_VOLTAGE)
         {
-            // measured voltage is high enough to auto-start heating, wait some time to stabilize
-            heaterAllowed = m_batteryStableTimer.hasElapsedSec(HEATER_BATTERY_STAB_TIME);
+            // measured voltage is high enougth to auto-start heating, wait some time to stabilize
+            heaterAllowed = m_heaterStableTimer.hasElapsedSec(HEATER_BATTERY_STAB_TIME);
         }
     }
 
@@ -116,11 +119,15 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
         case HeaterState::WarmupRamp:
             if (sensorTemp > closedLoopTemp)
             {
+                m_closedLoopStableTimer.reset();
                 return HeaterState::ClosedLoop;
             }
             else if (m_warmupTimer.hasElapsedSec(m_warmupTimeSec))
             {
                 SetFault(ch, Fault::SensorDidntHeat);
+                // retry after timeout
+                m_retryTime = HEATER_DIDNOTHEAT_RETRY_TIMEOUT;
+                m_retryTimer.reset();
                 return HeaterState::Stopped;
             }
 
@@ -137,19 +144,37 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
                 m_underheatTimer.reset();
             }
 
-            if (m_overheatTimer.hasElapsedSec(0.5f))
-            {
-                SetFault(ch, Fault::SensorOverheat);
-                return HeaterState::Stopped;
+            if (m_closedLoopStableTimer.hasElapsedSec(HEATER_CLOSED_LOOP_STAB_TIME)) {
+                if (m_overheatTimer.hasElapsedSec(0.5f))
+                {
+                    SetFault(ch, Fault::SensorOverheat);
+                    // retry after timeout
+                    m_retryTime = HEATER_OVERHEAT_RETRY_TIMEOUT;
+                    m_retryTimer.reset();
+                    return HeaterState::Stopped;
+                }
+                else if (m_underheatTimer.hasElapsedSec(0.5f))
+                {
+                    SetFault(ch, Fault::SensorUnderheat);
+                    // retry after timeout
+                    m_retryTime = HEATER_UNDERHEAT_RETRY_TIMEOUT;
+                    m_retryTimer.reset();
+                    return HeaterState::Stopped;
+                }
+            } else {
+                // give some time for stabilization...
+                // looks like heavy ramped Ipump affects sensorTemp measure
+                // and right after switch to closed loop sensorTemp drops below underhead threshold
             }
-            else if (m_underheatTimer.hasElapsedSec(0.5f))
-            {
-                SetFault(ch, Fault::SensorUnderheat);
-                return HeaterState::Stopped;
-            }
+            // reset fault
+            SetFault(ch, Fault::None);
 
             break;
         case HeaterState::Stopped:
+            if ((m_retryTime) && (m_retryTimer.hasElapsedSec(m_retryTime))) {
+                return HeaterState::Preheat;
+            }
+            break;
         case HeaterState::NoHeaterSupply:
             /* nop */
             break;
@@ -199,14 +224,14 @@ void HeaterControllerBase::Update(const ISampler& sampler, HeaterAllow heaterAll
     float sensorEsr = sampler.GetSensorInternalResistance();
     float sensorTemperature = sampler.GetSensorTemperature();
 
-    #ifdef BOARD_HAS_VOLTAGE_SENSE
+    #if defined(HEATER_INPUT_DIVIDER)
+        // if board has ability to measure heater supply localy - use it
+        float heaterSupplyVoltage = sampler.GetInternalHeaterVoltage();
+    #elif defined(BOARD_HAS_VOLTAGE_SENSE)
         float heaterSupplyVoltage = GetSupplyVoltage();
     #else // not BOARD_HAS_VOLTAGE_SENSE
-        // If we haven't heard from the ECU, use the internally sensed
-        // battery voltage instead of voltage over CAN.
-        float heaterSupplyVoltage = heaterAllowState == HeaterAllow::Unknown
-                                    ? sampler.GetInternalHeaterVoltage()
-                                    : GetRemoteBatteryVoltage();
+        // this board rely on measured voltage from ECU
+        float heaterSupplyVoltage = GetRemoteBatteryVoltage();
     #endif
 
     // Run the state machine

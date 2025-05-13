@@ -23,14 +23,15 @@ struct livedata_afr_s {
 			// lambda also displayed by TS as AFR, same data with different scale factor
 			float lambda;
 			uint16_t temperature;
-			uint16_t padding;
+			uint16_t heaterSupplyVoltage;
 			uint16_t nernstDc;
 			uint16_t nernstAc;
 			float pumpCurrentTarget;
 			float pumpCurrentMeasured;
 			uint16_t heaterDuty;
 			uint16_t heaterEffectiveVoltage;
-			float esr;
+			uint16_t esr;
+			int16_t nernstV;
 			uint8_t fault; // See wbo::Fault
 			uint8_t heaterState;
 		} __attribute__((packed));

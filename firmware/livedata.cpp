@@ -16,6 +16,7 @@ static livedata_afr_s livedata_afr[AFR_CHANNELS];
 
 void SamplingUpdateLiveData()
 {
+    float vbat = 0;
     for (int ch = 0; ch < AFR_CHANNELS; ch++)
     {
         volatile struct livedata_afr_s *data = &livedata_afr[ch];
@@ -23,9 +24,13 @@ void SamplingUpdateLiveData()
         const auto& sampler = GetSampler(ch);
         const auto& heater = GetHeaterController(ch);
 
+        float voltage = sampler.GetInternalHeaterVoltage();
+
         data->lambda = GetLambda(ch);
         data->temperature = sampler.GetSensorTemperature() * 10;
+        data->heaterSupplyVoltage = voltage * 100;
         data->nernstDc = sampler.GetNernstDc() * 1000;
+        data->nernstV = (int16_t)(sampler.GetNernstV() * 1000.0);
         data->nernstAc = sampler.GetNernstAc() * 1000;
         data->pumpCurrentTarget = GetPumpCurrent(ch);
         data->pumpCurrentMeasured = sampler.GetPumpNominalCurrent();
@@ -34,9 +39,12 @@ void SamplingUpdateLiveData()
         data->esr = sampler.GetSensorInternalResistance();
         data->fault = (uint8_t)GetCurrentFault(ch);
         data->heaterState = (uint8_t)GetHeaterState(ch);
+        /* TODO: add GetPumpOutputDuty() */
+        if (voltage > vbat)
+            vbat = voltage;
     }
 
-    livedata_common.vbatt = GetSampler(0).GetInternalHeaterVoltage();
+    livedata_common.vbatt = vbat;
 }
 
 template<>
