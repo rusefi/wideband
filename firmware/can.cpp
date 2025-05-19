@@ -121,7 +121,7 @@ void CanRxThread(void*)
         else if ((frame.DLC == 0 || frame.DLC == 1) && CAN_ID(frame) == WB_BL_ENTER)
         {
             // If 0xFF (force update all) or our ID, reset to bootloader, otherwise ignore
-            if (frame.DLC == 0 || frame.data8[0] == 0xFF || frame.data8[0] == GetConfiguration()->afr[0].RusEfiIdx)
+            if (frame.DLC == 0 || frame.data8[0] == 0xFF || frame.data8[0] == BoardGetHwId())
             {
                 SendAck();
 
