@@ -96,10 +96,23 @@ static uint8_t readSelPin(ioportid_t port, iopadid_t pad)
     }
 }
 
+static size_t boardHwId = 0;
+
+size_t BoardGetHwId()
+{
+    return boardHwId;
+}
+
 extern Configuration __configflash__start__;
 
 int InitConfiguration()
 {
+    // See https://github.com/mck1117/wideband/issues/11 to explain this madness
+    auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
+    auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
+
+    boardHwId = (3 * sel1 + sel2);
+
     return 0;
 }
 
@@ -120,11 +133,7 @@ Configuration* GetConfiguration()
         config.LoadDefaults();
 
         // Now, override the index with a hardware-strapped option (if present)
-        auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
-        auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
-
-        // See https://github.com/mck1117/wideband/issues/11 to explain this madness
-        switch (3 * sel1 + sel2) {
+        switch (BoardGetHwId()) {
             case 0: config.afr[0].RusEfiIdx = 2; break;
             case 1: config.afr[0].RusEfiIdx = 0; break;
             case 2: config.afr[0].RusEfiIdx = 3; break;
