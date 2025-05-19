@@ -140,8 +140,12 @@ void CanRxThread(void*)
             }
         }
         // Check if it's an "index set" message
-        else if (frame.DLC == 1 && CAN_ID(frame) == WB_MSG_SET_INDEX)
+        // Old style with DLC = 1, just set this index
+        // New style with DLC = 2, set if byte[1] equals to your hardware ID
+        else if (CAN_ID(frame) == WB_MSG_SET_INDEX &&
+            ((frame.DLC == 1) || (frame.DLC == 2 && frame.data8[1] == BoardGetHwId())))
         {
+            // new index
             int offset = frame.data8[0];
             configuration = GetConfiguration();
             for (int i = 0; i < AFR_CHANNELS; i++) {
