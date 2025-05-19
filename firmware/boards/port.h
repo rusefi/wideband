@@ -149,6 +149,8 @@ public:
     };
 };
 
+size_t BoardGetHwId();
+
 int InitConfiguration();
 Configuration* GetConfiguration();
 void SetConfiguration();
