@@ -64,6 +64,42 @@ static void SendAck()
     canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &frame, TIME_INFINITE);
 }
 
+static void SendPong()
+{
+    CANTxFrame frame;
+
+#ifdef STM32G4XX
+    frame.common.RTR = 0;
+#else // Not CAN FD
+    frame.RTR = CAN_RTR_DATA;
+#endif
+
+    CAN_EXT(frame) = 1;
+    CAN_EID(frame) = WB_ACK;
+    frame.DLC = 8;
+
+    // Hardware ID
+    frame.data8[0] = BoardGetHwId();
+    // protocol version
+    frame.data8[1] = RUSEFI_WIDEBAND_VERSION;
+
+    // Compile date
+    // TODO: something like https://stackoverflow.com/questions/11697820/how-to-use-date-and-time-predefined-macros-in-as-two-integers-then-stri
+    // Year
+    frame.data8[2] = __DATE__[9];
+    frame.data8[3] = __DATE__[10];
+
+    // Month
+    frame.data8[4] = __DATE__[0];
+    frame.data8[5] = __DATE__[2]; // not [1] to distinguish Jun and Jul -> Jn Jl, not Ju Ju
+
+    // Day
+    frame.data8[6] = __DATE__[4];
+    frame.data8[7] = __DATE__[5];
+
+    canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &frame, TIME_INFINITE);
+}
+
 // Start in Unknown state. If no CAN message is ever received, we operate
 // on internal battery sense etc.
 static HeaterAllow heaterAllow = HeaterAllow::Unknown;
@@ -154,6 +190,14 @@ void CanRxThread(void*)
             }
             SetConfiguration();
             SendAck();
+        }
+        else if (CAN_ID(frame) == WB_MSG_PING && frame.DLC == 1)
+        {
+            // broadcast or with our HW ID
+            if (frame.data8[0] == 0xFF || frame.data8[0] == BoardGetHwId())
+            {
+                SendPong();
+            }
         }
     }
 }
