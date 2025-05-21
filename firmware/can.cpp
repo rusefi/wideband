@@ -10,6 +10,8 @@
 #include "pump_dac.h"
 #include "port.h"
 
+#include "build_defs.h"
+
 // this same header is imported by rusEFI to get struct layouts and firmware version
 #include "../for_rusefi/wideband_can.h"
 
@@ -49,6 +51,19 @@ static void SendAck()
     frame.DLC = 0;
 
     canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &frame, TIME_INFINITE);
+}
+
+static void SendPong()
+{
+    CanTxTyped<wbo::PongData> frame(WB_ACK, true);;
+
+    frame.get().hwId = BoardGetHwId();
+    frame.get().Version = RUSEFI_WIDEBAND_VERSION;
+
+    // Compile date
+    frame.get().year = BUILD_YEAR_SINCE_2000;
+    frame.get().month = BUILD_MONTH;
+    frame.get().day = BUILD_DAY;
 }
 
 // Start in Unknown state. If no CAN message is ever received, we operate
@@ -131,6 +146,14 @@ void CanRxThread(void*)
             configuration->CanIndexOffset = frame.data8[0];
             SetConfiguration();
             SendAck();
+        }
+        else if (CAN_ID(frame) == WB_MSG_PING && frame.DLC == 1)
+        {
+            // broadcast or with our HW ID
+            if (frame.data8[0] == 0xFF || frame.data8[0] == BoardGetHwId())
+            {
+                SendPong();
+            }
         }
     }
 }
