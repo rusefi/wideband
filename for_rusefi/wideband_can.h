@@ -81,6 +81,19 @@ struct DiagData
     uint8_t pad;
 };
 
+struct PongData
+{
+    uint8_t hwId;
+    uint8_t Version;
+
+    // FW build date
+    uint8_t year; // starting from 2000
+    uint8_t month;
+    uint8_t day;
+
+    uint8_t reserved[3];
+};
+
 static inline const char* describeFault(Fault fault) {
     switch (fault) {
         case Fault::None:
