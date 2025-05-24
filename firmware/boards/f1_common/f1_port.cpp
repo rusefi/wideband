@@ -46,31 +46,6 @@ static mfs_nocache_buffer_t __nocache_mfsbuf;
 static Configuration cfg;
 #define MFS_CONFIGURATION_RECORD_ID     1
 
-#ifndef BOARD_DEFAULT_SENSOR_TYPE
-#define BOARD_DEFAULT_SENSOR_TYPE SensorType::LSU49
-#endif
-
-// Configuration defaults
-void Configuration::LoadDefaults()
-{
-    int i;
-
-    CanIndexOffset = 0;
-    sensorType = BOARD_DEFAULT_SENSOR_TYPE;
-
-    /* default auxout curve is 0..5V for AFR 8.5 to 18.0
-     * default auxout[n] input is AFR[n] */
-    for (i = 0; i < 8; i++) {
-        auxOutBins[0][i] = auxOutBins[1][i] = 8.5 + (18.0 - 8.5) / 7 * i;
-        auxOutValues[0][i] = auxOutValues[1][i] = 0.0 + (5.0 - 0.0) / 7 * i;
-    }
-    auxOutputSource[0] = AuxOutputMode::Afr0;
-    auxOutputSource[1] = AuxOutputMode::Afr1;
-
-    /* Finaly */
-    Tag = ExpectedTag;
-}
-
 int InitConfiguration()
 {
     size_t size = GetConfigurationSize();
