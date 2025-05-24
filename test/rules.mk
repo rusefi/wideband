@@ -95,47 +95,47 @@ endif
 	mkdir -p $(LSTDIR)
 
 $(ACPPOBJS) : $(OBJDIR)/%.o : %.cpp Makefile
+	@echo Compiling $(<F)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CPPC) -c $(CPPFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
 	@$(CPPC) -c $(CPPFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 endif
 
 $(ACOBJS) : $(OBJDIR)/%.o : %.c Makefile
+	@echo Compiling $(<F)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(CC) -c $(CFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
 	@$(CC) -c $(CFLAGS) $(AOPT) -I. $(IINCDIR) $< -o $@
 endif
 
 $(ASMOBJS) : $(OBJDIR)/%.o : %.s Makefile
+	@echo Compiling $(<F)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
 	@$(AS) -c $(ASFLAGS) -I. $(IINCDIR) $< -o $@
 endif
 
 $(ASMXOBJS) : $(OBJDIR)/%.o : %.S Makefile
+	@echo Compiling $(<F)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo 
 	$(CC) -c $(ASXFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 else
-	@echo Compiling $(<F)
 	@$(CC) -c $(ASXFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 endif
 
 $(BINARY_OUTPUT): $(OBJS)
+	@echo Linking $@
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 else
-	@echo Linking $@
 	@$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
 endif
 
