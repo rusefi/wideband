@@ -1,4 +1,5 @@
 #include "port.h"
+#include "shared/strap_pin.h"
 
 #include "wideband_config.h"
 
@@ -46,8 +47,25 @@ static mfs_nocache_buffer_t __nocache_mfsbuf;
 static Configuration cfg;
 #define MFS_CONFIGURATION_RECORD_ID     1
 
+static size_t boardHwId = 0;
+
+size_t BoardGetHwId()
+{
+    return boardHwId;
+}
+
 int InitConfiguration()
 {
+    // See https://github.com/mck1117/wideband/issues/11 to explain this madness
+    auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
+#ifdef ID_SEL2_PORT
+    auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
+#else
+    int sel2 = 0;
+#endif
+
+    boardHwId = (3 * sel1 + sel2);
+
     size_t size = GetConfigurationSize();
 
     /* Starting EFL driver.*/
@@ -64,6 +82,8 @@ int InitConfiguration()
     if ((err != MFS_NO_ERROR) || (size != GetConfigurationSize() || !cfg.IsValid())) {
         /* load defaults */
         cfg.LoadDefaults();
+
+        // TODO: override defaults with a hardware-strapped options
     }
 
     return 0;
