@@ -65,7 +65,7 @@
 #define AUXOUT_DAC_PWM_CHANNEL_1_NC	3
 
 #define ID_SEL1_PORT				GPIOC
-#define ID_SEL1_PIN					13
+#define ID_SEL1_PIN					12
 #define ID_SEL2_PORT				GPIOC
 #define ID_SEL2_PIN					13
 
