@@ -1,4 +1,5 @@
 #include "port.h"
+#include "shared/strap_pin.h"
 
 #include "wideband_config.h"
 
@@ -46,33 +47,25 @@ static mfs_nocache_buffer_t __nocache_mfsbuf;
 static Configuration cfg;
 #define MFS_CONFIGURATION_RECORD_ID     1
 
-#ifndef BOARD_DEFAULT_SENSOR_TYPE
-#define BOARD_DEFAULT_SENSOR_TYPE SensorType::LSU49
-#endif
+static size_t boardHwId = 0;
 
-// Configuration defaults
-void Configuration::LoadDefaults()
+size_t BoardGetHwId()
 {
-    int i;
-
-    CanIndexOffset = 0;
-    sensorType = BOARD_DEFAULT_SENSOR_TYPE;
-
-    /* default auxout curve is 0..5V for AFR 8.5 to 18.0
-     * default auxout[n] input is AFR[n] */
-    for (i = 0; i < 8; i++) {
-        auxOutBins[0][i] = auxOutBins[1][i] = 8.5 + (18.0 - 8.5) / 7 * i;
-        auxOutValues[0][i] = auxOutValues[1][i] = 0.0 + (5.0 - 0.0) / 7 * i;
-    }
-    auxOutputSource[0] = AuxOutputMode::Afr0;
-    auxOutputSource[1] = AuxOutputMode::Afr1;
-
-    /* Finaly */
-    Tag = ExpectedTag;
+    return boardHwId;
 }
 
 int InitConfiguration()
 {
+    // See https://github.com/mck1117/wideband/issues/11 to explain this madness
+    auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
+#ifdef ID_SEL2_PORT
+    auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
+#else
+    int sel2 = 0;
+#endif
+
+    boardHwId = (3 * sel1 + sel2);
+
     size_t size = GetConfigurationSize();
 
     /* Starting EFL driver.*/
@@ -89,6 +82,8 @@ int InitConfiguration()
     if ((err != MFS_NO_ERROR) || (size != GetConfigurationSize() || !cfg.IsValid())) {
         /* load defaults */
         cfg.LoadDefaults();
+
+        // TODO: override defaults with a hardware-strapped options
     }
 
     return 0;

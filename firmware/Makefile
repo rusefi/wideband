@@ -146,6 +146,7 @@ CPPSRC = $(ALLCPPSRC) \
           $(RUSEFI_LIB_CPP) \
           $(WIDEBANDSRC) \
           shared/flash.cpp \
+          shared/strap_pin.cpp \
           can.cpp \
           can_helper.cpp \
           fault.cpp \

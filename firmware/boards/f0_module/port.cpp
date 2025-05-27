@@ -1,5 +1,6 @@
 #include "port.h"
 #include "shared/flash.h"
+#include "shared/strap_pin.h"
 
 #include "wideband_config.h"
 
@@ -62,44 +63,23 @@ AnalogResult AnalogSample()
     };
 }
 
-// Returns:
-// low -> 0
-// floating -> 1
-// high -> 2
-static uint8_t readSelPin(ioportid_t port, iopadid_t pad)
+static size_t boardHwId = 0;
+
+size_t BoardGetHwId()
 {
-    // If we pull the pin down, does the input follow?
-    palSetPadMode(port, pad, PAL_MODE_INPUT_PULLDOWN);
-    chThdSleepMilliseconds(1);
-    auto pd = palReadPad(port, pad);
-
-    // If we pull the pin up, does the input follow?
-    palSetPadMode(port, pad, PAL_MODE_INPUT_PULLUP);
-    chThdSleepMilliseconds(1);
-    auto pu = palReadPad(port, pad);
-
-    // If the pin changed with pullup/down state, it's floating
-    if (pd != pu)
-    {
-        return 1;
-    }
-
-    if (pu)
-    {
-        // Pin was high
-        return 2;
-    }
-    else
-    {
-        // Pin was low
-        return 0;
-    }
+    return boardHwId;
 }
 
 extern Configuration __configflash__start__;
 
 int InitConfiguration()
 {
+    // See https://github.com/mck1117/wideband/issues/11 to explain this madness
+    auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
+    auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
+
+    boardHwId = (3 * sel1 + sel2);
+
     return 0;
 }
 
@@ -112,25 +92,26 @@ Configuration* GetConfiguration()
     // If config has been written before, use the stored configuration
     if (cfg.IsValid())
     {
+        // If we have valid config in flash - do not read ID pins, use ID from settings
         config = cfg;
     }
+    else
+    {
+        config.LoadDefaults();
 
-    // Now, override the index with a hardware-strapped option (if present)
-    auto sel1 = readSelPin(ID_SEL1_PORT, ID_SEL1_PIN);
-    auto sel2 = readSelPin(ID_SEL2_PORT, ID_SEL2_PIN);
-
-    // See https://github.com/mck1117/wideband/issues/11 to explain this madness
-    switch (3 * sel1 + sel2) {
-        case 0: config.CanIndexOffset = 2; break;
-        case 1: config.CanIndexOffset = 0; break;
-        case 2: config.CanIndexOffset = 3; break;
-        case 3: config.CanIndexOffset = 4; break;
-        case 4: /* both floating, do nothing */ break;
-        case 5: config.CanIndexOffset = 1; break;
-        case 6: config.CanIndexOffset = 5; break;
-        case 7: config.CanIndexOffset = 6; break;
-        case 8: config.CanIndexOffset = 7; break;
-        default: break;
+        // Now, override the index with a hardware-strapped option (if present)
+        switch (BoardGetHwId()) {
+            case 0: config.afr[0].RusEfiIdx = 2; break;
+            case 1: config.afr[0].RusEfiIdx = 0; break;
+            case 2: config.afr[0].RusEfiIdx = 3; break;
+            case 3: config.afr[0].RusEfiIdx = 4; break;
+            case 4: /* both floating, do nothing */ break;
+            case 5: config.afr[0].RusEfiIdx = 1; break;
+            case 6: config.afr[0].RusEfiIdx = 5; break;
+            case 7: config.afr[0].RusEfiIdx = 6; break;
+            case 8: config.afr[0].RusEfiIdx = 7; break;
+            default: break;
+        }
     }
 
     return &config;
