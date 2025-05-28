@@ -54,3 +54,10 @@
 // minus this offset to avoid Vnerns voltage clamp near 0V
 // *******************************
 #define START_PUMP_TEMP_OFFSET	(200.0)
+
+
+// *******************************
+//    CAN config
+// *******************************
+// default interval is 50mS
+#define CAN_STATUS_MSG_TIMEOUT_MS   250
