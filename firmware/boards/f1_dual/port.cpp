@@ -99,14 +99,12 @@ AnalogResult AnalogSample()
 
     if (l_heater && l_heater_new)
     {
-        float vbatt_raw = GetMaxSample(adcBuffer, 6) / HEATER_INPUT_DIVIDER;
-        l_heater_voltage = HEATER_FILTER_ALPHA * vbatt_raw + (1.0 - HEATER_FILTER_ALPHA) * l_heater_voltage;
+        l_heater_voltage = GetMaxSample(adcBuffer, 6) / HEATER_INPUT_DIVIDER;
     }
 
     if (r_heater && r_heater_new)
     {
-        float vbatt_raw = GetMaxSample(adcBuffer, 7) / HEATER_INPUT_DIVIDER;
-        r_heater_voltage = HEATER_FILTER_ALPHA * vbatt_raw + (1.0 - HEATER_FILTER_ALPHA) * r_heater_voltage;
+        r_heater_voltage = GetMaxSample(adcBuffer, 7) / HEATER_INPUT_DIVIDER;
     }
 
     return
