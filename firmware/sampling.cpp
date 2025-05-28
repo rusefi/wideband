@@ -115,7 +115,9 @@ void Sampler::ApplySample(AnalogChannelResult& result, float virtualGroundVoltag
         PUMP_FILTER_ALPHA * (result.PumpCurrentVoltage - virtualGroundVoltageInt);
 
 #ifdef HEATER_INPUT_DIVIDER
-    internalHeaterVoltage = result.HeaterSupplyVoltage;
+    internalHeaterVoltage =
+        (1 - HEATER_FILTER_ALPHA) * internalHeaterVoltage +
+        HEATER_FILTER_ALPHA * result.HeaterSupplyVoltage;
 #endif
 
     // Shift history over by one
