@@ -40,7 +40,7 @@ float Sampler::GetPumpNominalCurrent() const
 
 float Sampler::GetInternalHeaterVoltage() const
 {
-#ifdef BATTERY_INPUT_DIVIDER
+#ifdef HEATER_INPUT_DIVIDER
     // Dual HW can measure heater voltage for each channel
     // by measuring voltage on Heater- while FET is off
     return internalHeaterVoltage;
@@ -114,8 +114,10 @@ void Sampler::ApplySample(AnalogChannelResult& result, float virtualGroundVoltag
         (1 - PUMP_FILTER_ALPHA) * pumpCurrentSenseVoltage +
         PUMP_FILTER_ALPHA * (result.PumpCurrentVoltage - virtualGroundVoltageInt);
 
-#ifdef BATTERY_INPUT_DIVIDER
-    internalHeaterVoltage = result.HeaterSupplyVoltage;
+#ifdef HEATER_INPUT_DIVIDER
+    internalHeaterVoltage =
+        (1 - HEATER_FILTER_ALPHA) * internalHeaterVoltage +
+        HEATER_FILTER_ALPHA * result.HeaterSupplyVoltage;
 #endif
 
     // Shift history over by one

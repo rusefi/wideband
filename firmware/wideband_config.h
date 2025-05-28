@@ -43,14 +43,22 @@
 #define HEATER_PREHEAT_TIME 5
 #define HEATER_WARMUP_TIMEOUT 60
 
-#define HEATER_BATTERY_STAB_TIME 0.5f
-// minimal battery voltage to start heating without CAN command
-#define HEATER_BATTERY_ON_VOLTAGE	9.5
-// mininal battery voltage to continue heating
-#define HEATER_BATTETY_OFF_VOLTAGE  8.5
+// time to wait after heater voltage rise above HEATER_SUPPLY_ON_VOLTAGE
+#define HEATER_SUPPLY_STAB_TIME 0.5f
+// minimal heater voltage to start heating without CAN command
+#define HEATER_SUPPLY_ON_VOLTAGE 9.5
+// mininal heater voltage to continue heating
+#define HEATER_SUPPLY_OFF_VOLTAGE 8.5
 
 // *******************************
 // Start driving the pump just before we're at target temperature
 // minus this offset to avoid Vnerns voltage clamp near 0V
 // *******************************
 #define START_PUMP_TEMP_OFFSET	(200.0)
+
+
+// *******************************
+//    CAN config
+// *******************************
+// default interval is 50mS
+#define CAN_STATUS_MSG_TIMEOUT_MS   250

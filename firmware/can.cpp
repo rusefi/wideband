@@ -70,6 +70,7 @@ static void SendPong()
 // on internal battery sense etc.
 static HeaterAllow heaterAllow = HeaterAllow::Unknown;
 static float remoteBatteryVoltage = 0;
+Timer canStatusMsgTimer;
 
 static THD_WORKING_AREA(waCanRxThread, 512);
 void CanRxThread(void*)
@@ -114,16 +115,8 @@ void CanRxThread(void*)
             }
 
             // data0 contains battery voltage in tenths of a volt
-            float vbatt = frame.data8[0] * 0.1f;
-            if (vbatt < 5)
-            {
-                // provided vbatt is bogus, default to 14v nominal
-                remoteBatteryVoltage = 14;
-            }
-            else
-            {
-                remoteBatteryVoltage = vbatt;
-            }
+            remoteBatteryVoltage = frame.data8[0] * 0.1f;
+            canStatusMsgTimer.reset();
         }
         // If it's a bootloader entry request, reboot to the bootloader!
         else if ((frame.DLC == 0 || frame.DLC == 1) && CAN_ID(frame) == WB_BL_ENTER)
@@ -170,11 +163,17 @@ void CanRxThread(void*)
 
 HeaterAllow GetHeaterAllowed()
 {
-    return heaterAllow;
+    if (!canStatusMsgTimer.hasElapsedMs(CAN_STATUS_MSG_TIMEOUT_MS))
+        return heaterAllow;
+
+    return HeaterAllow::Unknown;
 }
 
 float GetRemoteBatteryVoltage()
 {
+    if (!canStatusMsgTimer.hasElapsedMs(CAN_STATUS_MSG_TIMEOUT_MS))
+        return 0;
+
     return remoteBatteryVoltage;
 }
 
