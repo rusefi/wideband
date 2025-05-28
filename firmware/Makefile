@@ -240,6 +240,8 @@ ifeq ($(USE_OPENBLT),yes)
   # Shared params
   INCDIR += boards/f1_common/openblt
   CSRC += boards/f1_common/openblt/shared_params.c
+else
+  DDEFS += -DUSE_OPENBLT=FALSE
 endif
 
 #
