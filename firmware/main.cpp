@@ -68,8 +68,10 @@ int main() {
             // Green is blinking
             palTogglePad(LED_GREEN_PORT, LED_GREEN_PIN);
 
+            // Very slow blinking if heating not allowed
             // Slow blink if closed loop, fast if not
-            chThdSleepMilliseconds(GetHeaterController(0).IsRunningClosedLoop() ? 700 : 50);
+            chThdSleepMilliseconds(GetHeaterAllowed() != HeaterAllow::Allowed ? 2000 :
+                GetHeaterController(0).IsRunningClosedLoop() ? 700 : 50);
         }
         else
         {

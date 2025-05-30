@@ -50,6 +50,10 @@ enum class Fault : uint8_t
 {
     None = 0,
 
+    // No CAN communication
+    CanSilent = 1,
+    // Heating is not allowed
+    NotAllowed = 2,
     // First fault code at 3 so it's easier to see blink code
     SensorDidntHeat = 3,
     SensorOverheat = 4,
@@ -98,6 +102,10 @@ static inline const char* describeFault(Fault fault) {
     switch (fault) {
         case Fault::None:
             return "OK";
+        case Fault::CanSilent:
+            return "CAN silent";
+        case Fault::NotAllowed:
+            return "Heating not allowed";
         case Fault::SensorDidntHeat:
             return "Sensor failed to heat";
         case Fault::SensorOverheat:

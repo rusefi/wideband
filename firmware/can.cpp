@@ -15,6 +15,8 @@
 // this same header is imported by rusEFI to get struct layouts and firmware version
 #include "../for_rusefi/wideband_can.h"
 
+using namespace wbo;
+
 static Configuration* configuration;
 
 static THD_WORKING_AREA(waCanTxThread, 512);
@@ -216,8 +218,8 @@ void SendRusefiFormat(uint8_t ch)
         // The same header is imported by the ECU and checked against this data in the frame
         frame.get().Version = RUSEFI_WIDEBAND_VERSION;
 
-        uint16_t lambdaInt = lambdaValid ? (lambda * 10000) : 0;
-        frame.get().Lambda = lambdaInt;
+        // Show calculated lambda even it is not valid. User should check Valid flag
+        frame.get().Lambda = lambda * 10000;
         frame.get().TemperatureC = sampler.GetSensorTemperature();
         bool heaterClosedLoop = heater.IsRunningClosedLoop();
         frame.get().Valid = (heaterClosedLoop && lambdaValid) ? 0x01 : 0x00;
@@ -229,7 +231,8 @@ void SendRusefiFormat(uint8_t ch)
         frame.get().Esr = sampler.GetSensorInternalResistance();
         frame.get().NernstDc = nernstDc * 1000;
         frame.get().PumpDuty = pumpDuty * 255;
-        frame.get().Status = GetCurrentFault(ch);
+        frame.get().Status = (GetHeaterAllowed() != HeaterAllow::Allowed) ?
+            Fault::NotAllowed : GetCurrentFault(ch);
         frame.get().HeaterDuty = GetHeaterDuty(ch) * 255;
     }
 }
