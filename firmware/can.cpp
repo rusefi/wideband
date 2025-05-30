@@ -164,7 +164,9 @@ void CanRxThread(void*)
 HeaterAllow GetHeaterAllowed()
 {
     if (!canStatusMsgTimer.hasElapsedMs(CAN_STATUS_MSG_TIMEOUT_MS))
+    {
         return heaterAllow;
+    }
 
     return HeaterAllow::Unknown;
 }
@@ -172,9 +174,11 @@ HeaterAllow GetHeaterAllowed()
 float GetRemoteBatteryVoltage()
 {
     if (!canStatusMsgTimer.hasElapsedMs(CAN_STATUS_MSG_TIMEOUT_MS))
-        return 0;
+    {
+        return remoteBatteryVoltage;
+    }
 
-    return remoteBatteryVoltage;
+    return 0;
 }
 
 void InitCan()
