@@ -18,6 +18,8 @@
 // this same header is imported by rusEFI to get struct layouts and firmware version
 #include "../for_rusefi/wideband_can.h"
 
+using namespace wbo;
+
 static Configuration* configuration;
 
 static THD_WORKING_AREA(waCanTxThread, 512);
@@ -248,7 +250,8 @@ void SendRusefiFormat(uint8_t ch)
         frame.get().Esr = sampler.GetSensorInternalResistance();
         frame.get().NernstDc = nernstDc * 1000;
         frame.get().PumpDuty = pumpDuty * 255;
-        frame.get().status = GetCurrentStatus(ch);
+        frame.get().status = (GetHeaterAllowed() != HeaterAllow::Allowed) ?
+            Status::NotAllowed : GetCurrentStatus(ch);
         frame.get().HeaterDuty = GetHeaterDuty(ch) * 255;
     }
 }
