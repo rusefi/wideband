@@ -64,6 +64,8 @@ enum class Status : uint8_t
 
     // Heating is not allowed
     NotAllowed = 6,
+    // No CAN communication
+    CanSilent = 7,
 };
 
 static inline bool isStatusError(Status s) {
@@ -130,6 +132,8 @@ static inline const char* describeStatus(Status status) {
             return "Sensor underheat";
         case Status::NotAllowed:
             return "Heating not allowed";
+        case Status::CanSilent:
+            return "CAN silent";
     }
 
     return "Unknown";
