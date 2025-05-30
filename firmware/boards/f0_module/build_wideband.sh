@@ -44,5 +44,11 @@ xxd -i build/wideband_image.bin \
     | cat <(echo -n "static const ") - \
     > ${DELIVER_DIR}/wideband_image.h
 
+# Build date
+echo "" >> ${DELIVER_DIR}/wideband_image.h
+echo "const char build_wideband_date[] = __DATE__;" | arm-none-eabi-gcc -E - | grep "wideband" >> ${DELIVER_DIR}/wideband_image.h
+echo "const char build_wideband_time[] = __TIME__;" | arm-none-eabi-gcc -E - | grep "wideband" >> ${DELIVER_DIR}/wideband_image.h
+echo "" >> ${DELIVER_DIR}/wideband_image.h
+
 cp ${DELIVER_DIR}/wideband_image_with_bl.bin ../for_rusefi/
 cp ${DELIVER_DIR}/wideband_image.h ../for_rusefi/
