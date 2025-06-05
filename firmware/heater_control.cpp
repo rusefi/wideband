@@ -56,7 +56,8 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
 {
     bool heaterAllowed = heaterAllowState == HeaterAllow::Allowed;
 
-    // Check battery voltage for thresholds only if there is still no command over CAN
+#if defined(HEATER_INPUT_DIVIDER) || defined(BOARD_HAS_VOLTAGE_SENSE)
+    // Check localy measured battery voltage for thresholds only if there is still no command over CAN
     if (heaterAllowState == HeaterAllow::Unknown)
     {
         // measured voltage too low to auto-start heating
@@ -71,6 +72,11 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
             heaterAllowed = m_heaterStableTimer.hasElapsedSec(HEATER_SUPPLY_STAB_TIME);
         }
     }
+#else
+    // f0_module receives both heaterAllowed and heaterSupplyVoltage within same CAN message
+    // no need to additionaly check heaterSupplyVoltage if ECU commands to heat/stop heating
+    (void)heaterSupplyVoltage;
+#endif
 
     if (!heaterAllowed)
     {
@@ -150,8 +156,22 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
 
             break;
         case HeaterState::Stopped:
-        case HeaterState::NoHeaterSupply:
             /* nop */
+            break;
+        case HeaterState::NoHeaterSupply:
+            #if defined(HEATER_INPUT_DIVIDER) || defined(BOARD_HAS_VOLTAGE_SENSE)
+                if (heaterSupplyVoltage > HEATER_SUPPLY_ON_VOLTAGE)
+                {
+                    // measured voltage is high enougth to auto-start heating, wait some time to stabilize
+                    if (m_heaterStableTimer.hasElapsedSec(HEATER_SUPPLY_STAB_TIME)) {
+                        m_preheatTimer.reset();
+                        return HeaterState::Preheat;
+                    }
+                }
+            #else
+                m_preheatTimer.reset();
+                return HeaterState::Preheat;
+            #endif
             break;
     }
 
