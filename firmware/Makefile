@@ -23,7 +23,7 @@ endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti -fno-exceptions -ffast-math -funsafe-math-optimizations -fno-threadsafe-statics -fno-use-cxa-atexit -std=c++17
+  USE_CPPOPT = -fno-rtti -fno-exceptions -ffast-math -funsafe-math-optimizations -fno-threadsafe-statics -fno-use-cxa-atexit -std=c++20
 endif
 
 # Enable this if you want the linker to remove unused code and data.
@@ -144,6 +144,7 @@ CPPSRC = $(ALLCPPSRC) \
           $(BOARDDIR)/port.cpp \
           $(BOARDDIR)/port_shared.cpp \
           $(RUSEFI_LIB_CPP) \
+          $(RUSEFI_LIB)/util/src/timer.cpp \
           $(WIDEBANDSRC) \
           shared/flash.cpp \
           can.cpp \
@@ -160,7 +161,10 @@ CPPSRC = $(ALLCPPSRC) \
           indication.cpp \
           sampling_thread.cpp \
           heater_thread.cpp \
+          global.cpp \
           main.cpp
+
+DDEFS += -DEFI_UNIT_TEST=0 -DTS_ENABLED=0
 
 ifneq ($(ENABLE_TS),)
 CPPSRC += console/binary/tunerstudio.cpp \
