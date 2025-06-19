@@ -2137,5 +2137,5 @@ static const unsigned char build_wideband_image_bin[] = {
 unsigned int build_wideband_image_bin_len = 25600;
 
 const char build_wideband_date[] = "Jun 19 2025";
-const char build_wideband_time[] = "12:43:40";
+const char build_wideband_time[] = "21:38:16";
 
