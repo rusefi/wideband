@@ -11,7 +11,7 @@
 #include "port.h"
 #include "pump_control.h"
 
-#include <rusefi/math.h>
+#include <rusefi/rusefi_math.h>
 
 #include "build_defs.h"
 
