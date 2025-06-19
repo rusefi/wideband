@@ -124,7 +124,7 @@ endif
 $(ASMXOBJS) : $(OBJDIR)/%.o : %.S Makefile
 	@echo Compiling $(<F)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
-	@echo 
+	@echo
 	$(CC) -c $(ASXFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
 else
 	@$(CC) -c $(ASXFLAGS) $(TOPT) -I. $(IINCDIR) $< -o $@
@@ -132,6 +132,7 @@ endif
 
 $(BINARY_OUTPUT): $(OBJS)
 	@echo Linking $@
+	rm -rf $(BUILDDIR)/obj/*gcda
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
 	$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
