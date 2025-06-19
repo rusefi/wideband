@@ -40,6 +40,7 @@ INCDIR += \
 	$(FIRMWARE_DIR) \
 	$(FIRMWARE_DIR)/boards \
 	$(FIRMWARE_DIR)/util \
+	$(FIRMWARE_DIR)/libfirmware/mock
 
 # User may want to pass in a forced value for SANITIZE
 ifeq ($(SANITIZE),)
@@ -74,7 +75,7 @@ endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -std=c++17 -fno-rtti -fno-use-cxa-atexit
+  USE_CPPOPT = -std=c++20 -fno-rtti -fno-use-cxa-atexit
 endif
 
 USE_CPPOPT += -DMOCK_TIMER
