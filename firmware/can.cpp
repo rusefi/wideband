@@ -121,10 +121,10 @@ void CanRxThread(void*)
             canStatusMsgTimer.reset();
         }
         // If it's a bootloader entry request, reboot to the bootloader!
-        else if ((frame.DLC == 0 || frame.DLC == 1) && CAN_ID(frame) == WB_BL_ENTER)
+        else if (frame.DLC == 1 && CAN_ID(frame) == WB_BL_ENTER)
         {
             // If 0xFF (force update all) or our ID, reset to bootloader, otherwise ignore
-            if (frame.DLC == 0 || frame.data8[0] == 0xFF || frame.data8[0] == BoardGetHwId())
+            if (frame.data8[0] == 0xFF || frame.data8[0] == BoardGetHwId())
             {
                 SendAck();
 
@@ -135,10 +135,9 @@ void CanRxThread(void*)
             }
         }
         // Check if it's an "index set" message
-        // Old style with DLC = 1, just set this index
-        // New style with DLC = 2, set if byte[1] equals to your hardware ID
+        // set if byte[1] equals to our hardware ID
         else if (CAN_ID(frame) == WB_MSG_SET_INDEX &&
-            ((frame.DLC == 1) || (frame.DLC == 2 && frame.data8[1] == BoardGetHwId())))
+            frame.DLC == 2 && frame.data8[1] == BoardGetHwId())
         {
             // new index
             int offset = frame.data8[0];
