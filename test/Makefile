@@ -23,6 +23,7 @@ CSRC += \
 CPPSRC += \
 	$(RUSEFI_LIB_CPP) \
 	$(RUSEFI_LIB_CPP_TEST) \
+	$(RUSEFI_LIB)/mock/lib-time-mocks.cpp \
 	$(WIDEBANDSRC) \
 	gtest-all.cpp \
 	gmock-all.cpp \
@@ -37,6 +38,7 @@ INCDIR += \
 	$(PROJECT_DIR)/googletest/googletest \
 	$(PROJECT_DIR)/googletest/googletest/include \
 	$(RUSEFI_LIB_INC) \
+	$(RUSEFI_LIB)/mock \
 	$(FIRMWARE_DIR) \
 	$(FIRMWARE_DIR)/boards \
 	$(FIRMWARE_DIR)/util \
