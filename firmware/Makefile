@@ -160,6 +160,7 @@ CPPSRC = $(ALLCPPSRC) \
           indication.cpp \
           sampling_thread.cpp \
           heater_thread.cpp \
+          global.cpp \
           main.cpp
 
 ifneq ($(ENABLE_TS),)
