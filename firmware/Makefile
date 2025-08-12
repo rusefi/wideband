@@ -165,7 +165,7 @@ CPPSRC = $(ALLCPPSRC) \
           global.cpp \
           main.cpp
 
-DDEFS += -DEFI_UNIT_TEST=0 -DTS_ENABLED=0
+DDEFS += -DEFI_UNIT_TEST=0
 
 ifneq ($(ENABLE_TS),)
 CPPSRC += console/binary/tunerstudio.cpp \
