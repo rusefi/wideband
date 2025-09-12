@@ -57,14 +57,21 @@ enum class Status : uint8_t
     SensorDidntHeat = 3,
     SensorOverheat = 4,
     SensorUnderheat = 5,
+    LastError = 5,
 
     // Heating is not allowed
     NotAllowed = 6,
 };
 
 static inline bool isStatusError(Status s) {
-    return s >= Status::FirstError;
+    return s >= Status::FirstError && s <= Status::FirstError;
 }
+
+enum class SensorType : uint8_t {
+    LSU49 = 0,
+    LSU42 = 1,
+    LSUADV = 2,
+};
 
 struct StandardData
 {

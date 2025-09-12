@@ -5,6 +5,9 @@
 
 #include "port_shared.h"
 #include "wideband_config.h"
+#include "../for_rusefi/wideband_can.h"
+
+using namespace wbo;
 
 struct AnalogChannelResult
 {
@@ -31,12 +34,6 @@ struct AnalogResult
 void PortPrepareAnalogSampling();
 void AnalogSampleStart();
 AnalogResult AnalogSampleFinish();
-
-enum class SensorType : uint8_t {
-    LSU49 = 0,
-    LSU42 = 1,
-    LSUADV = 2,
-};
 
 #ifndef BOARD_DEFAULT_SENSOR_TYPE
 #define BOARD_DEFAULT_SENSOR_TYPE SensorType::LSU49
