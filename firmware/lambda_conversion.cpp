@@ -74,6 +74,7 @@ static float GetPhiLsuAdv(float pumpCurrent)
 static float GetPhi(float pumpCurrent) {
     switch (GetSensorType()) {
         case SensorType::LSU49:
+        case SensorType::LSU49_FAE:
             return GetPhiLsu49(pumpCurrent);
         case SensorType::LSU42:
             return GetPhiLsu42(pumpCurrent);

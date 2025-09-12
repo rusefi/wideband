@@ -71,6 +71,7 @@ enum class SensorType : uint8_t {
     LSU49 = 0,
     LSU42 = 1,
     LSUADV = 2,
+    LSU49_FAE = 3,
 };
 
 struct StandardData
