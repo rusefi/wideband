@@ -151,6 +151,19 @@ void CanRxThread(void*)
             SetConfiguration();
             SendAck();
         }
+        // Set sensor type command?
+        else if (CAN_ID(frame) == WB_MSG_SET_SENS_TYPE &&
+            frame.DLC == 2 && frame.data8[0] == BoardGetHwId())
+        {
+            uint8_t type = frame.data8[1];
+            if ((type <= (uint8_t)SensorType::LSU49_FAE) &&
+                (type >= (uint8_t)SensorType::LSU49)) {
+                // TODO: check if HW supports this type of sensor
+                configuration->sensorType = (SensorType)type;
+                SetConfiguration();
+                SendAck();
+            }
+        }
         else if (CAN_ID(frame) == WB_MSG_PING && frame.DLC == 1)
         {
             // broadcast or with our HW ID
@@ -220,6 +233,9 @@ void SendRusefiFormat(uint8_t ch)
         frame.get().TemperatureC = sampler.GetSensorTemperature();
         bool heaterClosedLoop = heater.IsRunningClosedLoop();
         frame.get().Valid = (heaterClosedLoop && lambdaValid) ? 0x01 : 0x00;
+        // Sensor type flags
+        frame.get().Valid |= (GetSensorType() == SensorType::LSU49) ? 0x02 : 0x00;
+        frame.get().Valid |= (GetSensorType() == SensorType::LSU49_FAE) ? 0x04 : 0x00;
     }
 
     if (configuration->afr[ch].RusEfiTxDiag) {

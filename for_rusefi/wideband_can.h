@@ -14,6 +14,7 @@
 #define WB_OPCODE_SET_INDEX 4
 #define WB_OPCODE_ECU_STATUS 5
 #define WB_OPCODE_PING 6
+#define WB_OPCODE_SET_SENS_TYPE 7
 
 #define WB_BL_BASE (WB_BL_HEADER << 4)
 #define WB_BL_CMD(opcode, extra) (((WB_BL_BASE | (opcode)) << 16) | (extra))
@@ -38,6 +39,8 @@
 #define WB_MGS_ECU_STATUS WB_BL_CMD(WB_OPCODE_ECU_STATUS, 0)
 // 0xEF6'0000
 #define WB_MSG_PING WB_BL_CMD(WB_OPCODE_PING, 0)
+// 0xEF7'0000
+#define WB_MSG_SET_SENS_TYPE WB_BL_CMD(WB_OPCODE_SET_SENS_TYPE, 0)
 
 #define WB_DATA_BASE_ADDR 0x190
 
