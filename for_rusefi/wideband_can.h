@@ -61,6 +61,13 @@ enum class Fault : uint8_t
     SensorNoHeatSupply = 6,
 };
 
+enum class SensorType : uint8_t {
+    LSU49 = 0,
+    LSU42 = 1,
+    LSUADV = 2,
+    LSU49_FAE = 3,
+};
+
 struct StandardData
 {
     // DO NOT move the version field - its position and format must be

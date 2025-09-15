@@ -152,6 +152,7 @@ void ToggleESRDriver(SensorType sensor)
             palTogglePad(NERNST_42_ESR_DRIVER_PORT, NERNST_42_ESR_DRIVER_PIN);
         break;
         case SensorType::LSU49:
+        case SensorType::LSU49_FAE:
             palTogglePad(NERNST_49_ESR_DRIVER_PORT, NERNST_49_ESR_DRIVER_PIN);
         break;
         case SensorType::LSUADV:
