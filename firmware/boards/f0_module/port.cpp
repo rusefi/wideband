@@ -132,7 +132,7 @@ void SetConfiguration()
 
 SensorType GetSensorType()
 {
-    return SensorType::LSU49;
+    return config.sensorType;
 }
 
 void SetupESRDriver(SensorType)
