@@ -3,6 +3,8 @@
 #include "status.h"
 #include "sampling.h"
 
+#include "port.h"
+
 using namespace wbo;
 
 static const PidConfig heaterPidConfig =
@@ -13,18 +15,17 @@ static const PidConfig heaterPidConfig =
     .clamp = 3.0f,      // Integrator clamp (volts)
 };
 
-HeaterControllerBase::HeaterControllerBase(int ch, int preheatTimeSec, int warmupTimeSec)
+HeaterControllerBase::HeaterControllerBase(int ch)
     : m_pid(heaterPidConfig, HEATER_CONTROL_PERIOD)
     , ch(ch)
-    , m_preheatTimeSec(preheatTimeSec)
-    , m_warmupTimeSec(warmupTimeSec)
 {
 }
 
-void HeaterControllerBase::Configure(float targetTempC, float targetEsr)
+void HeaterControllerBase::Configure(float targetTempC, float targetEsr, struct HeaterConfig* configuration)
 {
     m_targetTempC = targetTempC;
     m_targetEsr = targetEsr;
+    m_configuration = configuration;
 
     m_preheatTimer.reset();
     m_warmupTimer.reset();
@@ -60,11 +61,11 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
     if (heaterAllowState == HeaterAllow::Unknown)
     {
         // measured voltage too low to auto-start heating
-        if (heaterSupplyVoltage < HEATER_SUPPLY_OFF_VOLTAGE)
+        if (heaterSupplyVoltage < m_configuration->HeaterSupplyOffVoltage)
         {
             m_heaterStableTimer.reset();
         }
-        else if (heaterSupplyVoltage > HEATER_SUPPLY_ON_VOLTAGE)
+        else if (heaterSupplyVoltage > m_configuration->HeaterSupplyOnVoltage)
         {
             // measured voltage is high enougth to auto-start heating, wait some time to stabilize
             heaterAllowed = m_heaterStableTimer.hasElapsedSec(HEATER_BATTERY_STAB_TIME);
@@ -100,7 +101,7 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
             #endif
 
             // If preheat timeout, or sensor is already hot (engine running?)
-            if (m_preheatTimer.hasElapsedSec(m_preheatTimeSec) || sensorTemp > closedLoopTemp)
+            if (m_preheatTimer.hasElapsedSec(m_configuration->PreheatTimeSec) || sensorTemp > closedLoopTemp)
             {
                 // If enough time has elapsed, start the ramp
                 // Start the ramp at 7 volts
@@ -122,7 +123,7 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
                 SetStatus(ch, Status::RunningClosedLoop);
                 return HeaterState::ClosedLoop;
             }
-            else if (m_warmupTimer.hasElapsedSec(m_warmupTimeSec))
+            else if (m_warmupTimer.hasElapsedSec(HEATER_WARMUP_TIMEOUT))
             {
                 SetStatus(ch, Status::SensorDidntHeat);
                 // retry after timeout
