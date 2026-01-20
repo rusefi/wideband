@@ -16,11 +16,15 @@ public:
         , m_periodSec(1e-3 * periodMs)
     {
     }
+    void Configure(const PidConfig *config)
+    {
+        m_config = *config;
+    }
 
     float GetOutput(float setpoint, float observation);
 
 private:
-    const PidConfig& m_config;
+    PidConfig m_config;
     const float m_periodSec;
 
     float m_lastError = 0;

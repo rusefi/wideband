@@ -4,6 +4,7 @@
 #include "sampling.h"
 #include "pump_dac.h"
 #include "pid.h"
+#include "port.h"
 
 #include "ch.h"
 
@@ -11,8 +12,16 @@ struct pump_control_state {
     Pid pumpPid;
 };
 
-PidConfig pumpPidConfig = {
+// common for LSU4.2, LSU4.9 and LSU ADV
+PidConfig boschPumpPidConfig = {
     .kP = 50,
+    .kI = 10000,
+    .kD = 0,
+    .clamp = 10,
+};
+
+PidConfig faePumpPidConfig = {
+    .kP = 10,
     .kI = 10000,
     .kD = 0,
     .clamp = 10,
@@ -21,21 +30,21 @@ PidConfig pumpPidConfig = {
 static struct pump_control_state state[AFR_CHANNELS] =
 {
     {
-        Pid(pumpPidConfig, PUMP_CONTROL_PERIOD),
+        Pid(boschPumpPidConfig, PUMP_CONTROL_PERIOD),
     },
 #if (AFR_CHANNELS >= 2)
     {
-        Pid(pumpPidConfig, PUMP_CONTROL_PERIOD),
+        Pid(boschPumpPidConfig, PUMP_CONTROL_PERIOD),
     },
 #endif
 #if (AFR_CHANNELS >= 3)
     {
-        Pid(pumpPidConfig, PUMP_CONTROL_PERIOD),
+        Pid(boschPumpPidConfig, PUMP_CONTROL_PERIOD),
     },
 #endif
 #if (AFR_CHANNELS >= 4)
     {
-        Pid(pumpPidConfig, PUMP_CONTROL_PERIOD),
+        Pid(boschPumpPidConfig, PUMP_CONTROL_PERIOD),
     },
 #endif
 };
@@ -66,6 +75,13 @@ static void PumpThread(void*)
                 (sampler.GetSensorTemperature() >= heater.GetTargetTemp() - START_PUMP_TEMP_OFFSET))
             {
                 float nernstVoltage = sampler.GetNernstDc();
+
+                // Do this on each iteration as user may want to change settings on the fly
+                if (GetSensorType() == SensorType::LSU49_FAE) {
+                    s.pumpPid.Configure(&faePumpPidConfig);
+                } else {
+                    s.pumpPid.Configure(&boschPumpPidConfig);
+                }
 
                 float result = pumpGainAdjust * s.pumpPid.GetOutput(NERNST_TARGET, nernstVoltage);
 
