@@ -1,6 +1,6 @@
 #include "pwm.h"
 
-#include <rusefi/rusefi_math.h>
+#include <rusefi/math.h>
 
 Pwm::Pwm(PWMDriver& driver)
     : m_driver(&driver)

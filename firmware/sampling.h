@@ -2,7 +2,7 @@
 
 #include "wideband_config.h"
 
-#include <rusefi/timer.h>
+#include "timer.h"
 
 struct ISampler
 {

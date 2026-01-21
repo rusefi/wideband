@@ -61,7 +61,7 @@ static void SamplingThread(void*)
             samplers[ch].ApplySample(result.ch[ch], result.VirtualGroundVoltageInt);
         }
 
-#if defined(TS_ENABLED) && TS_ENABLED != 0
+#if defined(TS_ENABLED)
         /* tunerstudio */
         SamplingUpdateLiveData();
 #endif
