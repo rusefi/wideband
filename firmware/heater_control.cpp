@@ -65,14 +65,19 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
         if (heaterSupplyVoltage < HEATER_SUPPLY_OFF_VOLTAGE)
         {
             m_heaterStableTimer.reset();
+            heaterAllowed = false;
         }
         else if (heaterSupplyVoltage > HEATER_SUPPLY_ON_VOLTAGE)
         {
             // measured voltage is high enougth to pre-heating, wait some time to stabilize
             heaterAllowed = m_heaterStableTimer.hasElapsedSec(HEATER_SUPPLY_STAB_TIME);
+        } else {
+            // Hysteresis: do not allow heating, but also do not reset timer
+            heaterAllowed = false;
         }
     } else if (heaterAllowState == HeaterAllow::NotAllowed) {
-        //
+        // we still need some stabilization time
+        m_heaterStableTimer.reset();
         heaterAllowed = false;
     }
 
