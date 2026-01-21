@@ -53,21 +53,27 @@ HeaterState HeaterControllerBase::GetHeaterState() const
 
 HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterAllow heaterAllowState, float heaterSupplyVoltage, float sensorTemp)
 {
-    bool heaterAllowed = heaterAllowState == HeaterAllow::Allowed;
+    bool heaterAllowed = false;
 
     // Check battery voltage for thresholds only if there is still no command over CAN
-    if (heaterAllowState == HeaterAllow::Unknown)
+    // Still check battery voltage if commanded over can:
+    // ECU can be powered from USB and have "Force O2 heating" option enabled while 0 Vbat
+    if ((heaterAllowState == HeaterAllow::Unknown) ||
+        (heaterAllowState == HeaterAllow::Allowed))
     {
-        // measured voltage too low to auto-start heating
+        // measured or received over CAN voltage too low to start heating
         if (heaterSupplyVoltage < HEATER_SUPPLY_OFF_VOLTAGE)
         {
             m_heaterStableTimer.reset();
         }
         else if (heaterSupplyVoltage > HEATER_SUPPLY_ON_VOLTAGE)
         {
-            // measured voltage is high enougth to auto-start heating, wait some time to stabilize
+            // measured voltage is high enougth to pre-heating, wait some time to stabilize
             heaterAllowed = m_heaterStableTimer.hasElapsedSec(HEATER_SUPPLY_STAB_TIME);
         }
+    } else if (heaterAllowState == HeaterAllow::NotAllowed) {
+        //
+        heaterAllowed = false;
     }
 
     if (!heaterAllowed)
