@@ -69,7 +69,8 @@ enum class Status : uint8_t
 };
 
 static inline bool isStatusError(Status s) {
-    return s >= Status::FirstError && s <= Status::FirstError;
+    return ((s >= Status::FirstError) &&
+            (s <= Status::LastError));
 }
 
 enum class SensorType : uint8_t {
