@@ -123,16 +123,7 @@ void CanRxThread(void*)
             }
 
             // data0 contains battery voltage in tenths of a volt
-            float vbatt = frame.data8[0] * 0.1f;
-            if (vbatt < 5)
-            {
-                // provided vbatt is bogus, default to 14v nominal
-                remoteBatteryVoltage = 14;
-            }
-            else
-            {
-                remoteBatteryVoltage = vbatt;
-            }
+            remoteBatteryVoltage = frame.data8[0] * 0.1f;
 
             if (frame.DLC >= 3) {
                 // data2 contains pump controller gain in percent (0-200)
