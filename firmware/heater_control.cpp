@@ -165,6 +165,10 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState, HeaterA
 
             break;
         case HeaterState::Stopped:
+            // there is not direct exit from this state, but logic will switch to Preheat state in case of:
+            // - heaterSupplyVoltage drops below HEATER_SUPPLY_OFF_VOLTAGE
+            // - received HeaterAllow::NotAllowed heaterAllowState
+            // - F042 only: no CAN communication for CAN_STATUS_MSG_TIMEOUT_MS causing HeaterAllow::Unknown and heaterSupplyVoltage = 0
             break;
     }
 
