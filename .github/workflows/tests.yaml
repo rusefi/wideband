@@ -38,8 +38,14 @@ jobs:
       run: gcc -v
 
     - name: Build Tests
+      if: ${{ matrix.os != 'macos-latest' }}
       working-directory: test
       run: make -j4 SANITIZE=yes COVERAGE=yes
+
+    - name: Build Tests
+      if: ${{ matrix.os == 'macos-latest' }}
+      working-directory: test
+      run: make -j4 SANITIZE=yes
 
     - name: Run Tests
       working-directory: test
