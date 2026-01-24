@@ -50,6 +50,19 @@ ifeq ($(SANITIZE),)
 	endif
 endif
 
+ifeq ($(COVERAGE),yes)
+  ifeq ($(IS_CLANG),1)
+    COVERAGE_FLAGS := -fprofile-instr-generate -fcoverage-mapping
+    $(info Detected Clang: using LLVM-style coverage flags)
+  else
+    COVERAGE_FLAGS := --coverage
+    $(info Detected GCC: using GCC-style coverage flags)
+  endif
+  USE_COPT += $(COVERAGE_FLAGS)
+  USE_CPPOPT += $(COVERAGE_FLAGS)
+endif
+
+
 IS_MAC = no
 ifneq ($(OS),Windows_NT)
 	UNAME_S := $(shell uname -s)
@@ -196,6 +209,10 @@ ULIBS = -lm
 
 ifeq ($(SANITIZE),yes)
 	ULIBS += -fsanitize=address -fsanitize=undefined
+endif
+
+ifeq ($(COVERAGE),yes)
+	ULIBS += $(COVERAGE_FLAGS)
 endif
 
 #
