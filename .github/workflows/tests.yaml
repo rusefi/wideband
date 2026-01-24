@@ -53,7 +53,7 @@ jobs:
 
     - name: Generate Code Coverage
       if: ${{ matrix.os != 'macos-latest' }}
-      working-directory: ./unit_tests/
+      working-directory: ./test/
       run: ./ci_gcov.sh
 
     - name: Upload code coverage artifacts
@@ -61,7 +61,7 @@ jobs:
       uses: actions/upload-artifact@v6
       with:
         name: rusefi_wideband_code_coverage
-        path: ./unit_tests/gcov_working_area/gcov
+        path: ./test/gcov_working_area/gcov
 
     - name: Rebuild Tests For Valgrind
       # Valgrind isn't compatible with address sanitizer, so we have to rebuild the code
