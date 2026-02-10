@@ -130,12 +130,21 @@ else
   TRGT =
 endif
 
+ifeq ($(IS_MAC),yes)
+CC   = clang
+CPPC = clang++
+LD   = clang++
+CP   = $(TRGT)objcopy
+AS   = clang -x assembler-with-cpp
+OD   = $(TRGT)objdump
+else
 CC   = $(TRGT)gcc
 CPPC = $(TRGT)g++
 LD   = $(TRGT)g++
 CP   = $(TRGT)objcopy
 AS   = $(TRGT)gcc -x assembler-with-cpp
 OD   = $(TRGT)objdump
+endif
 HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
 
@@ -206,3 +215,9 @@ endif
 PROJECT = wideband_test
 
 include rules.mk
+
+# Clean main firmware build artifacts when "make clean" is run in the test directory, since the test code depends on the firmware code
+# and will not compile if the firmware code was previously built for a different target
+CLEAN_RULE_HOOK:
+	$(MAKE) -C $(FIRMWARE_DIR) clean || true
+	rm -rf $(FIRMWARE_DIR)/.dep $(FIRMWARE_DIR)/build

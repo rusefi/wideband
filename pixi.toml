@@ -1,0 +1,35 @@
+[workspace]
+channels = ["conda-forge", "xtitoris"]
+name = "wideband"
+platforms = ["win-64", "linux-64", "osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+clean = { cmd = "make clean", cwd = "firmware" }
+build-tests = { cmd = "make -j8", cwd = "test" }
+tests = { cmd = "build/wideband_test", cwd = "test", depends-on = ["build-tests"], env = { SAN_OPTIONS = "detect_stack_use_after_return=1" } }
+
+[tasks.build]
+args = ["board"]
+cmd = "cd firmware/boards/{{ board }} && bash build_wideband.sh"
+
+[dependencies]
+make = ">=4.4.1,<5"
+arm-gnu-toolchain = ">=15.2.rel1,<16"
+hex2dfu = ">=0.21.0,<0.22"
+srecord = ">=1.65,<2"
+
+[target.linux-64.dependencies]
+gcc = ">=15.2.0,<15.3"
+gxx = ">=15.2.0,<15.3"
+
+[target.win-64.dependencies]
+m2-coreutils = "*"
+m2-bash = "*"
+m2-grep = "*"
+gcc = ">=15.2.0,<15.3"
+gxx = ">=15.2.0,<15.3"
+
+[target.osx-arm64.dependencies]
+clang = ">=19.1.7,<19.2"
+clangxx = ">=19.1.7,<19.2"
