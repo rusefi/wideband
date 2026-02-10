@@ -65,3 +65,6 @@ build/
 
 # cortex-debug vscode extension local state
 .vscode/.cortex-debug*state.json
+# pixi environments
+.pixi/*
+!.pixi/config.toml

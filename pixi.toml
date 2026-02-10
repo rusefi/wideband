@@ -1,0 +1,23 @@
+[workspace]
+channels = ["conda-forge", "xtitoris"]
+name = "wideband"
+platforms = ["win-64", "linux-64", "osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+clean = { cmd = "make clean", cwd = "firmware" }
+
+[tasks.build]
+args = ["board"]
+cmd = "cd firmware/boards/{{ board }} && bash build_wideband.sh"
+
+[dependencies]
+make = ">=4.4.1,<5"
+arm-gnu-toolchain = ">=15.2.rel1,<16"
+hex2dfu = ">=0.21.0,<0.22"
+srecord = ">=1.65,<2"
+
+[target.win-64.dependencies]
+m2-coreutils = "*"
+m2-bash = "*"
+m2-grep = "*"

@@ -30,11 +30,19 @@ mkdir -p ${DELIVER_DIR}
 rm -f ${DELIVER_DIR}/*
 
 if uname | grep "NT"; then
-  HEX2DFU=./ext/encedo_hex2dfu/hex2dfu.exe
+  if command -v hex2dfu.exe >/dev/null 2>&1; then
+    HEX2DFU=hex2dfu.exe
+  else
+    HEX2DFU=./ext/encedo_hex2dfu/hex2dfu.exe
+  fi
   SREC_CAT=srec_cat.exe
 else
-  HEX2DFU=./ext/encedo_hex2dfu/hex2dfu.bin
-  chmod u+x $HEX2DFU
+  if command -v hex2dfu >/dev/null 2>&1; then
+    HEX2DFU=hex2dfu
+  else
+    HEX2DFU=./ext/encedo_hex2dfu/hex2dfu.bin
+    chmod u+x $HEX2DFU
+  fi
   SREC_CAT=srec_cat
 fi
 

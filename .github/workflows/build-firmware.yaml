@@ -22,26 +22,17 @@ jobs:
         with:
           submodules: recursive
 
-      # Build machines don't have arm-none-eabi gcc, so let's download it and put it on the path
-      - name: Download & Install GCC
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-        run: | # Compiler hosted on our other git repo - avoids having to download from the nice folks at ARM every time
-          wget 'https://github.com/rusefi/build_support/raw/master/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz' -O compiler.tar.xz
-          tar -xvf compiler.tar.xz
-          echo "::add-path::`pwd`/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin"
-
-      # Make sure the compiler we just downloaded works - just print out the version
-      - name: Test Compiler
-        run: arm-none-eabi-gcc -v
+      - uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: v0.63.2
+          cache: true
 
       - name: Install build tools
         run: |
           sudo apt-get install srecord libarchive-zip-perl
 
       - name: Build Firmware
-        working-directory: ./firmware/boards/${{matrix.build-target}}
-        run: ./build_wideband.sh
+        run: pixi run build ${{matrix.build-target}}
 
       - name: Attach binaries
         uses: actions/upload-artifact@v4
