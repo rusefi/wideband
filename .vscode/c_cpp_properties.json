@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Pixi STM32",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "${workspaceFolder}\\.pixi\\envs\\default\\bin\\arm-none-eabi-gcc.exe"
+        }
+    ],
+    "version": 4
+}
