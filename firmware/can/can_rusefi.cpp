@@ -75,11 +75,10 @@ void SendRusefiFormat(Configuration* configuration, uint8_t ch)
 
 #if (EGT_CHANNELS > 0)
 
-void SendRusefiEgtFormat(Configuration* configuration, uint8_t ch)
+void SendRusefiEgtFormat(Configuration* configuration)
 {
     // TODO: Implement RusEFI EGT format
     (void)configuration;
-    (void)ch;
 }
 
 #endif

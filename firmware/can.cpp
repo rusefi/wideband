@@ -39,9 +39,7 @@ void CanTxThread(void*)
 
         // EGT - 20 Hz
         if ((cycle % 5) == 0) {
-            for (int ch = 0; ch < EGT_CHANNELS; ch++) {
-                SendCanEgtForChannel(ch);
-            }
+            SendCanEgt();
         }
 
         cycle++;
@@ -102,23 +100,22 @@ __attribute__((weak)) void SendCanForChannel(uint8_t ch)
 
     switch (configuration->afr[ch].ExtraCanProtocol)
     {
-        case CanProtocol::AemNet:
+        case CanAfrProtocol::AemNet:
             SendAemNetUEGOFormat(configuration, ch);
             break;
-        case CanProtocol::EcuMasterClassic:
-        case CanProtocol::EcuMasterBlack:
+        case CanAfrProtocol::EcuMaster:
             SendEcuMasterAfrFormat(configuration, ch);
             break;
-        case CanProtocol::Haltech:
+        case CanAfrProtocol::Haltech:
             SendHaltechAfrFormat(configuration, ch);
             break;
-        case CanProtocol::LinkEcu:
+        case CanAfrProtocol::LinkEcu:
             SendLinkAfrFormat(configuration, ch);
             break;
-        case CanProtocol::Emtron:
+        case CanAfrProtocol::Emtron:
             SendEmtronAfrFormat(configuration, ch);
             break;
-        case CanProtocol::Motec:
+        case CanAfrProtocol::Motec:
             SendMotecAfrFormat(configuration, ch);
             break;
         default:
@@ -126,32 +123,36 @@ __attribute__((weak)) void SendCanForChannel(uint8_t ch)
     }
 }
 
-__attribute__((weak)) void SendCanEgtForChannel(uint8_t ch)
+__attribute__((weak)) void SendCanEgt()
 {
 #if (EGT_CHANNELS > 0)
 
-    SendRusefiEgtFormat(configuration, ch);
+    SendRusefiEgtFormat(configuration);
 
-    switch (configuration->egt[ch].ExtraCanProtocol)
+    // Look at channel 0 EGT protocol
+    switch (configuration->egt[0].ExtraCanProtocol)
     {
-        case CanProtocol::AemNet:
-            SendAemNetEGTFormat(configuration, ch);
+        case CanEgtProtocol::AemNet0305:
+            SendAemNetEGT0305Format(configuration);
             break;
-        case CanProtocol::EcuMasterClassic:
-        case CanProtocol::EcuMasterBlack:
-            SendEcuMasterEgtFormat(configuration, ch);
+        case CanEgtProtocol::AemNet2224:
+            SendAemNetEGT2224Format(configuration);
             break;
-        case CanProtocol::Haltech:
-            SendHaltechEgtFormat(configuration, ch);
+        case CanEgtProtocol::EcuMasterClassic:
+        case CanEgtProtocol::EcuMasterBlack:
+            SendEcuMasterEgtFormat(configuration);
             break;
-        case CanProtocol::LinkEcu:
-            SendLinkEgtFormat(configuration, ch);
+        case CanEgtProtocol::Haltech:
+            SendHaltechEgtFormat(configuration);
             break;
-        case CanProtocol::Emtron:
-            SendEmtronEgtFormat(configuration, ch);
+        case CanEgtProtocol::LinkEcu:
+            SendLinkEgtFormat(configuration);
             break;
-        case CanProtocol::Motec:
-            SendMotec888Format(configuration, ch);
+        case CanEgtProtocol::Emtron:
+            SendEmtronEgtFormat(configuration);
+            break;
+        case CanEgtProtocol::Motec:
+            SendMotec888Format(configuration);
             break;
         default:
             break;

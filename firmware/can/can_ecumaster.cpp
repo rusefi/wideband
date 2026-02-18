@@ -127,21 +127,21 @@ static_assert(sizeof(EgtData) == 8);
 } //namespace ecumaster
 
 
-void SendEcuMasterEgtFormat(Configuration* configuration, uint8_t ch)
+void SendEcuMasterEgtFormat(Configuration* configuration)
 {
-    if (ch != 0)
-        return; // EcuMaster protocol sends 1-4 channels in one message
-
     auto base = ECUMASTER_CLASSIC_EGT_BASE_ID;
-    if (configuration->egt[ch].ExtraCanProtocol == CanProtocol::EcuMasterBlack)
+    if (configuration->egt[0].ExtraCanProtocol == CanEgtProtocol::EcuMasterBlack)
         base = ECUMASTER_BLACK_EGT_BASE_ID;
 
-    auto id = base + configuration->egt[ch].ExtraCanIdOffset;
+    auto id = base + configuration->egt[0].ExtraCanIdOffset;
 
     CanTxTyped<ecumaster::EgtData> frame(id, true);
 
     for (uint8_t i = 0; i < EGT_CHANNELS; i++)
     {
+        if (!configuration->egt[i].ExtraCanChannelEnabled)
+            continue;
+
         frame.get().Egt[i] = getEgtDrivers()[i].temperature;
     }
 }

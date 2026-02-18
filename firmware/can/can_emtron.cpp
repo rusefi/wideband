@@ -175,36 +175,47 @@ uint16_t get_temperature(float raw_temp)
 
 } //namespace emtron
 
-void SendEmtronEgtFormat(Configuration* configuration, uint8_t ch)
+void SendEmtronEgtFormat(Configuration* configuration)
 {
-    if (ch != 0)
-        return;
-
-    auto id = EMTRON_ETC4_BASE_ID + configuration->egt[ch].ExtraCanIdOffset;
+    auto id = EMTRON_ETC4_BASE_ID + configuration->egt[0].ExtraCanIdOffset;
     CanTxTyped<emtron::ETC4Data> frame(id, true);
 
     const auto egtDrivers = getEgtDrivers();
-    uint16_t temp = emtron::get_temperature(egtDrivers[0].temperature);
+    
+    uint16_t temp;
 
-    frame->EgtData[0] = (temp >> 4) & 0xFF; // High 8 bits
-    frame->EgtData[1] = (temp & 0xF) << 4; // Low 4 bits in high nibble
+    if (configuration->egt[0].ExtraCanChannelEnabled)
+    {
+        uint16_t temp = emtron::get_temperature(egtDrivers[0].temperature);
+        frame->EgtData[0] = (temp >> 4) & 0xFF; // High 8 bits
+        frame->EgtData[1] = (temp & 0xF) << 4; // Low 4 bits in high nibble
+    }
 
     #if (EGT_CHANNELS > 1)
+    if (configuration->egt[1].ExtraCanChannelEnabled)
+    {
         temp = emtron::get_temperature(egtDrivers[1].temperature);
         frame->EgtData[1] |= (temp >> 8) & 0xF; // High 4 bits in low nibble
         frame->EgtData[2] = temp & 0xFF; // Low 8 bits
+    }
     #endif
 
     #if (EGT_CHANNELS > 2)
+    if (configuration->egt[2].ExtraCanChannelEnabled)
+    {
         temp = emtron::get_temperature(egtDrivers[2].temperature);
         frame->EgtData[3] |= (temp >> 8) & 0xF; // High 4 bits in low nibble
         frame->EgtData[4] = temp & 0xFF; // Low 8 bits
+    }
     #endif
 
     #if (EGT_CHANNELS > 3)
+    if (configuration->egt[3].ExtraCanChannelEnabled)
+    {
         temp = emtron::get_temperature(egtDrivers[3].temperature);
         frame->EgtData[4] |= (temp >> 8) & 0xF; // High 4 bits in low nibble
         frame->EgtData[5] = temp & 0xFF; // Low 8 bits
+    }
     #endif
 
     frame->ColdJunctionTemp = egtDrivers[0].coldJunctionTemperature;

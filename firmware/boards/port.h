@@ -59,15 +59,26 @@ enum class AuxOutputMode : uint8_t {
     Egt1 = 5,
 };
 
-enum class CanProtocol : uint8_t {
+enum class CanAfrProtocol : uint8_t {
     None = 0,
     AemNet = 1,
+    LinkEcu = 2,
+    Haltech = 3,
+    EcuMaster = 4,
+    Motec = 6,
+    Emtron = 7,
+};
+
+enum class CanEgtProtocol : uint8_t {
+    None = 0,
+    AemNet0305 = 1,
     LinkEcu = 2,
     Haltech = 3,
     EcuMasterClassic = 4,
     EcuMasterBlack = 5,
     Motec = 6,
     Emtron = 7,
+    AemNet2224 = 8,
 };
 
 class Configuration {
@@ -110,7 +121,7 @@ public:
             afr[i].RusEfiIdx = i;
 
             // No extra protocol by default
-            afr[i].ExtraCanProtocol = CanProtocol::None;
+            afr[i].ExtraCanProtocol = CanAfrProtocol::None;
             afr[i].ExtraCanIdOffset = i;
         }
 
@@ -121,7 +132,8 @@ public:
             egt[i].RusEfiIdx = i;
 
             // AemNet protocol by default
-            egt[i].ExtraCanProtocol = CanProtocol::AemNet;
+            egt[i].ExtraCanProtocol = CanEgtProtocol::AemNet0305;
+            egt[i].ExtraCanChannelEnabled = true;
             egt[i].ExtraCanIdOffset = i;
         }
 
@@ -149,8 +161,7 @@ public:
             struct {
                 bool RusEfiTx:1;
                 bool RusEfiTxDiag:1;
-                CanProtocol ExtraCanProtocol:4;
-
+                CanAfrProtocol ExtraCanProtocol:4;
 
                 uint8_t RusEfiIdx;
                 uint8_t ExtraCanIdOffset;
@@ -161,8 +172,9 @@ public:
             struct {
                 bool RusEfiTx:1;
                 bool RusEfiTxDiag:1;
-                CanProtocol ExtraCanProtocol:4;
-
+                CanEgtProtocol ExtraCanProtocol:4;
+                uint8_t Reserved0:3; // Keep some room for future protocol expansion without breaking the config format
+                bool ExtraCanChannelEnabled:1; // Is the channel actually enabled in the selected protocol
 
                 uint8_t RusEfiIdx;
                 uint8_t ExtraCanIdOffset;

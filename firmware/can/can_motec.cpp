@@ -156,37 +156,34 @@ static_assert(sizeof(E888Data1) == 8);
 
 } //namespace motec
 
-void SendMotec888Format(Configuration* configuration, uint8_t ch)
+void SendMotec888Format(Configuration* configuration)
 {
-    if (ch % 2 > 0) { // Up to 2 channels per message
-        return;
-    }
-
-    auto id = MOTEC_E888_BASE_ID + configuration->egt[ch].ExtraCanIdOffset;
+    auto id = MOTEC_E888_BASE_ID + configuration->egt[0].ExtraCanIdOffset;
     const auto egtDrivers = getEgtDrivers();
 
     CanTxTyped<motec::E888Data1> frame(id, true);
 
-    switch (ch) {
-        case 0: // Channels 1 and 2
-            #if AUX_INPUT_CHANNELS > 0
+    #if AUX_INPUT_CHANNELS > 0
 
-            frame->data.Value1 = GetAuxInputVoltage(0) * 1000;
-            frame->data.Value2 = GetAuxInputVoltage(1) * 1000;
+    frame->data.Value1 = GetAuxInputVoltage(0) * 1000;
+    frame->data.Value2 = GetAuxInputVoltage(1) * 1000;
 
-            #endif
+    #endif
 
-            frame->data.Value3 = egtDrivers[ch].temperature * 4; // TC1, Convert to 0.25 C resolution
-            if (ch + 1 < EGT_CHANNELS) {
-                frame->data.Value4 = egtDrivers[ch + 1].temperature * 4; // TC2
-            }
-
-            // Setting flag last to avoid Value1 overlap
-            frame->flag.CompoundId = 0;
-            break;
-
-        // TODO: Add more channels if needed
+    if (configuration->egt[0].ExtraCanChannelEnabled) {
+        frame->data.Value3 = egtDrivers[0].temperature * 4; // TC1, Convert to 0.25 C resolution
     }
+    
+    #if (EGT_CHANNELS > 1)
+    if (configuration->egt[1].ExtraCanChannelEnabled) {
+        frame->data.Value4 = egtDrivers[1].temperature * 4; // TC2
+    }
+    #endif
+
+    // Setting flag last to avoid Value1 overlap
+    frame->flag.CompoundId = 0;
+
+    // TODO: Add more channels if needed
 }
 
 #endif

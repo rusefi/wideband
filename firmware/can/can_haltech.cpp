@@ -54,13 +54,13 @@ static_assert(sizeof(AfrData1) == 8);
 void SendHaltechAfrFormat(Configuration* configuration, uint8_t ch)
 {
     // If channel 0 is configured for Haltech, channel 1 data is sent in the same message
-    if (ch == 1 && configuration->afr[0].ExtraCanProtocol == CanProtocol::Haltech)
+    if (ch == 1 && configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech)
         return;
 
-    uint8_t channel0enabled = configuration->afr[0].ExtraCanProtocol == CanProtocol::Haltech;
+    uint8_t channel0enabled = configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech;
 
     #if AFR_CHANNELS > 1
-    uint8_t channel1enabled = configuration->afr[1].ExtraCanProtocol == CanProtocol::Haltech;
+    uint8_t channel1enabled = configuration->afr[1].ExtraCanProtocol == CanAfrProtocol::Haltech;
     #endif
 
     auto id = HALTECH_WB2_BASE_ID; // WB2A
@@ -129,17 +129,17 @@ static_assert(sizeof(EgtData) == 8);
 // id 717 for "box b assigned to can tc 5-8"
 // Multiplier of 2381 divider of 5850 and offset of -250.
 
-void SendHaltechEgtFormat(Configuration* configuration, uint8_t ch)
+void SendHaltechEgtFormat(Configuration* configuration)
 {
-    if (ch != 0)
-        return; // Haltech protocol sends 1-4 channels in one message
-
-    auto id = HALTECH_TCA_BASE_ID + configuration->egt[ch].ExtraCanIdOffset;
+    auto id = HALTECH_TCA_BASE_ID + configuration->egt[0].ExtraCanIdOffset;
 
     CanTxTyped<haltech::EgtData> frame(id, true);
 
     for (uint8_t i = 0; i < EGT_CHANNELS; i++)
     {
+        if (!configuration->egt[i].ExtraCanChannelEnabled)
+            continue;
+
         frame.get().Egt[i] = (getEgtDrivers()[i].temperature + 250.0f) * 5850.0f / 2381.0f;
     }
 }

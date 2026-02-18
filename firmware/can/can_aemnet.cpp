@@ -70,62 +70,84 @@ namespace aemnet
 
 #define AEMNET_EGT_TX_PERIOD        50
 
-// That's for AEM EGT Gauge 1800F (30-0305)
-// It does not support multiple EGT channels, as 0x000A0306 is a ID of AEM Boost Gauge 50psia (30-0306)
-//#define AEMNET_EGT_BASE_ID          0x000A0305 
+// AEM EGT Gauge 1800F (30-0305)
+#define AEMNET_EGT_0305_BASE_ID          0x000A0305 
 
-// This one is for 8-Channel K-Type CAN Module (30-2224), which supports up to 8 EGT channels
+struct Egt0305Data
+{
+    // 1 degC/bit, 0 to 65535 degC
+    beuint16_t TemperatureC;
+    uint8_t Reserved[6];
+} __attribute__((packed));
+
+static_assert(sizeof(Egt0305Data) == 8);
+
+// 8-Channel K-Type CAN Module (30-2224), which supports up to 8 EGT channels
 // https://documents.aemelectronics.com/techlibrary_30-2224-_8-channel-k-type-can-module-instructions.pdf
 // 0xBA00 and 0xBB00 if using 29 bit IDs 
 // 0x5A0 and 0x5B0 if using 11 bit IDs
-#define AEMNET_EGT1_BASE_ID          0x0000BA00
-#define AEMNET_EGT2_BASE_ID          0x0000BB00
+#define AEMNET_EGT_2224_1_BASE_ID          0x0000BA00
+#define AEMNET_EGT_2224_2_BASE_ID          0x0000BB00
 
 // 29 bit ID, 500kbs, rate 20 hz, endian big, DLC 8
 // UNIT1 ID: 0x0000BA00 .. 0x0000BA01
 // UNIT2 ID: 0x0000BB00 .. 0x0000BB01
-struct EgtData
+struct Egt2224Data
 {
     beint16_t Egt[4]; // 0.1 C/bit, -3276.8 to 3276.7 C
 } __attribute__((packed));
 
-static_assert(sizeof(EgtData) == 8);
+static_assert(sizeof(Egt2224Data) == 8);
 
 // UNIT1 ID: 0x0000BA02
 // UNIT2 ID: 0x0000BB02
-struct EgtStatus
+struct Egt2224Status
 {
     beuint16_t ColdJunctionTemp; // 0.1 C/bit, -3276.8 to 3276.7 C
     uint8_t BatteryVoltage;      // 0 - 25.5 V
     uint8_t Reserved[5];
 } __attribute__((packed));
 
-static_assert(sizeof(EgtStatus) == 8);
+static_assert(sizeof(Egt2224Status) == 8);
 
 } //namespace aemnet
 
-void SendAemNetEGTFormat(Configuration* cfg, uint8_t ch)
-{
-    if (ch != 0)
-        return; // Use a first channel for config, as AEMNet sends up to 4 EGT channels in one message
 
+void SendAemNetEGT0305Format(Configuration* cfg)
+{
+    for (uint8_t ch = 0; ch < EGT_CHANNELS; ch++)
+    {
+        if (!cfg->egt[ch].ExtraCanChannelEnabled)
+            return;
+
+        auto id = AEMNET_EGT_0305_BASE_ID + cfg->egt[ch].ExtraCanIdOffset;
+        CanTxTyped<aemnet::Egt0305Data> frame(id, true);
+        frame.get().TemperatureC = getEgtDrivers()[ch].temperature;
+    }
+}
+
+void SendAemNetEGT2224Format(Configuration* cfg)
+{
     uint32_t id;
-    switch (cfg->egt[ch].ExtraCanIdOffset)
+    switch (cfg->egt[0].ExtraCanIdOffset)
     {
         case 0:
-            id = AEMNET_EGT1_BASE_ID;
+            id = AEMNET_EGT_2224_1_BASE_ID;
             break;
         case 1:
-            id = AEMNET_EGT2_BASE_ID;
+            id = AEMNET_EGT_2224_2_BASE_ID;
             break;
         
         default:
             return; // Invalid channel for AEMNet EGT
     }
 
-    CanTxTyped<aemnet::EgtData> frame(id, true);
+    CanTxTyped<aemnet::Egt2224Data> frame(id, true);
     for (uint8_t i = 0; i < EGT_CHANNELS; i++)
     {
+        if (!cfg->egt[i].ExtraCanChannelEnabled)
+            continue;
+
         frame.get().Egt[i] = getEgtDrivers()[i].temperature * 10;
     }
 }

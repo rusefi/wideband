@@ -183,21 +183,19 @@ static_assert(sizeof(EgtStatus) == 8);
 
 } //namespace linkecu
 
-void SendLinkEgtFormat(Configuration* configuration, uint8_t ch)
+void SendLinkEgtFormat(Configuration* configuration)
 {
     (void)configuration;
 
-    if (ch != 0)
-        return; // Link ECU protocol sends 1-4 channels in one message
-
-    const auto& sampler = GetSampler(ch);
     const auto egtDrivers = getEgtDrivers();
 
-    CanTxTyped<linkecu::EgtData1> frame(LINKECU_TCCXX_BASE_ID + configuration->egt[ch].ExtraCanIdOffset, true);
+    CanTxTyped<linkecu::EgtData1> frame(LINKECU_TCCXX_BASE_ID + configuration->egt[0].ExtraCanIdOffset, true);
     frame->Egt[0] = egtDrivers[0].temperature * 4;
 
     for (uint8_t i = 1; i < EGT_CHANNELS ; i++)
     {
+        if (!configuration->egt[i].ExtraCanChannelEnabled)
+            continue;
         frame->Egt[i] = egtDrivers[i].temperature * 4;
     }
 
