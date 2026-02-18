@@ -172,8 +172,7 @@ public:
             struct {
                 bool RusEfiTx:1;
                 bool RusEfiTxDiag:1;
-                CanEgtProtocol ExtraCanProtocol:4;
-                uint8_t Reserved0:3; // Keep some room for future protocol expansion without breaking the config format
+                CanEgtProtocol ExtraCanProtocol:5;
                 bool ExtraCanChannelEnabled:1; // Is the channel actually enabled in the selected protocol
 
                 uint8_t RusEfiIdx;

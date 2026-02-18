@@ -140,7 +140,7 @@ TEST(ConfigLayout, BinaryCompatibility_AfrChannelSettings) {
     
     EXPECT_TRUE(config.afr[0].RusEfiTx);
     EXPECT_TRUE(config.afr[0].RusEfiTxDiag);
-    EXPECT_TRUE(config.afr[0].ExtraCanProtocol == CanProtocol::AemNet);
+    EXPECT_TRUE(config.afr[0].ExtraCanProtocol == CanAfrProtocol::AemNet);
     EXPECT_EQ(config.afr[0].RusEfiIdx, 5);
     EXPECT_EQ(config.afr[0].ExtraCanIdOffset, 10);
     
@@ -153,7 +153,7 @@ TEST(ConfigLayout, BinaryCompatibility_AfrChannelSettings) {
     
     EXPECT_FALSE(config.afr[1].RusEfiTx);
     EXPECT_TRUE(config.afr[1].RusEfiTxDiag);
-    EXPECT_TRUE(config.afr[1].ExtraCanProtocol == CanProtocol::None);
+    EXPECT_TRUE(config.afr[1].ExtraCanProtocol == CanAfrProtocol::None);
     EXPECT_EQ(config.afr[1].RusEfiIdx, 7);
     EXPECT_EQ(config.afr[1].ExtraCanIdOffset, 15);
 }
@@ -177,22 +177,24 @@ TEST(ConfigLayout, BinaryCompatibility_EgtChannelSettings) {
     
     EXPECT_TRUE(config.egt[0].RusEfiTx);
     EXPECT_FALSE(config.egt[0].RusEfiTxDiag);
-    EXPECT_TRUE(config.egt[0].ExtraCanProtocol == CanProtocol::AemNet);
+    EXPECT_TRUE(config.egt[0].ExtraCanProtocol == CanEgtProtocol::AemNet0305);
     EXPECT_EQ(config.egt[0].RusEfiIdx, 3);
     EXPECT_EQ(config.egt[0].ExtraCanIdOffset, 8);
+    EXPECT_EQ(config.egt[0].ExtraCanChannelEnabled, 0);
 
     // Write second EGT channel
     offset += ConfigSizes::EGT_CHANNEL;
-    uint8_t bitfield1 = 0b00000010; // RusEfiTx=0, RusEfiTxDiag=1, ExtraCanProtocol=0
+    uint8_t bitfield1 = 0b10000010; // RusEfiTx=0, RusEfiTxDiag=1, ExtraCanProtocol=0
     WriteAtOffset(config, offset, bitfield1);
     WriteAtOffset(config, offset + 1, static_cast<uint8_t>(7)); // RusEfiIdx
     WriteAtOffset(config, offset + 2, static_cast<uint8_t>(15)); // ExtraCanIdOffset
     
     EXPECT_FALSE(config.egt[1].RusEfiTx);
     EXPECT_TRUE(config.egt[1].RusEfiTxDiag);
-    EXPECT_TRUE(config.egt[1].ExtraCanProtocol == CanProtocol::None);
+    EXPECT_TRUE(config.egt[1].ExtraCanProtocol == CanEgtProtocol::None);
     EXPECT_EQ(config.egt[1].RusEfiIdx, 7);
     EXPECT_EQ(config.egt[1].ExtraCanIdOffset, 15);
+    EXPECT_EQ(config.egt[1].ExtraCanChannelEnabled, 1);
 }
 
 TEST(ConfigLayout, BinaryCompatibility_HeaterConfig) {
