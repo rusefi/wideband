@@ -1,16 +1,132 @@
 {
     "configurations": [
         {
-            "name": "Pixi STM32",
+            "name": "F0 Module (default)",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/firmware/boards/f0_module",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/include",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/templates/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/LLD/ADCv1",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/STM32F0xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/ext/ST/STM32F0xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/startup/ARMCMx/devices/STM32F0xx",
+                "${workspaceFolder}/firmware/**"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/firmware/boards/f0_module/board.h"
             ],
             "defines": [
-                "_DEBUG",
-                "UNICODE",
-                "_UNICODE"
+                "STM32F042x6",
+                "WB_PROD=1",
+                "USE_BOOTLOADER=1",
+                "_DEBUG"
             ],
-            "compilerPath": "${workspaceFolder}\\.pixi\\envs\\default\\bin\\arm-none-eabi-gcc.exe"
+            "compilerPath": "${workspaceFolder}\\.pixi\\envs\\default\\bin\\arm-none-eabi-gcc.exe",
+            "cStandard": "gnu11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "F1 Dual",
+            "includePath": [
+                "${workspaceFolder}/firmware/boards/f1_dual",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/include",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/templates/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/ext/ST/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/startup/ARMCMx/devices/STM32F1xx",
+                "${workspaceFolder}/firmware/**"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/firmware/boards/f1_dual/board.h"
+            ],
+            "defines": [
+                "WB_PROD=1",
+                "TS_ENABLED=TRUE",
+                "_DEBUG"
+            ],
+            "compilerPath": "${workspaceFolder}\\.pixi\\envs\\default\\bin\\arm-none-eabi-gcc.exe",
+            "cStandard": "gnu11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "F1 Dual Rev1",
+            "includePath": [
+                "${workspaceFolder}/firmware/boards/f1_dual_rev1",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/include",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/templates/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/ext/ST/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/startup/ARMCMx/devices/STM32F1xx",
+                "${workspaceFolder}/firmware/**"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/firmware/boards/f1_dual_rev1/board.h",
+                "${workspaceFolder}/firmware/boards/f1_dual_rev1/io/io_pins.h"
+            ],
+            "defines": [
+                "WB_PROD=1",
+                "TS_ENABLED=TRUE",
+                "_DEBUG"
+            ],
+            "compilerPath": "${workspaceFolder}\\.pixi\\envs\\default\\bin\\arm-none-eabi-gcc.exe",
+            "cStandard": "gnu11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "F1 Rev2",
+            "includePath": [
+                "${workspaceFolder}/firmware/boards/f1_rev2",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/include",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/templates/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/ext/ST/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/startup/ARMCMx/devices/STM32F1xx",
+                "${workspaceFolder}/firmware/**"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/firmware/boards/f1_rev2/board.h"
+            ],
+            "defines": [
+                "WB_PROD=1",
+                "TS_ENABLED=TRUE",
+                "_DEBUG"
+            ],
+            "compilerPath": "${workspaceFolder}\\.pixi\\envs\\default\\bin\\arm-none-eabi-gcc.exe",
+            "cStandard": "gnu11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "F1 Rev3",
+            "includePath": [
+                "${workspaceFolder}/firmware/boards/f1_rev3",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/include",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/templates/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/**",
+                "${workspaceFolder}/firmware/ChibiOS/os/hal/ports/STM32/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/ext/ST/STM32F1xx",
+                "${workspaceFolder}/firmware/ChibiOS/os/common/startup/ARMCMx/devices/STM32F1xx",
+                "${workspaceFolder}/firmware/**"
+            ],
+            "forcedInclude": [
+                "${workspaceFolder}/firmware/boards/f1_rev3/board.h"
+            ],
+            "defines": [
+                "WB_PROD=1",
+                "TS_ENABLED=TRUE",
+                "_DEBUG"
+            ],
+            "compilerPath": "${workspaceFolder}\\.pixi\\envs\\default\\bin\\arm-none-eabi-gcc.exe",
+            "cStandard": "gnu11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "gcc-arm"
         }
     ],
     "version": 4
