@@ -21,6 +21,11 @@ struct AnalogChannelResult
 struct AnalogResult
 {
     AnalogChannelResult ch[AFR_CHANNELS];
+
+    #if AUX_INPUT_CHANNELS > 0
+    float AuxInputVoltage[AUX_INPUT_CHANNELS];
+    #endif
+
     float VirtualGroundVoltageInt;
 
     #ifdef BOARD_HAS_VOLTAGE_SENSE

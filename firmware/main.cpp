@@ -10,6 +10,7 @@
 #include "uart.h"
 #include "io_pins.h"
 #include "auxout.h"
+#include "pwmout.h"
 #include "max3185x.h"
 #include "port.h"
 #include "tunerstudio.h"
@@ -37,6 +38,10 @@ int main() {
     StartHeaterControl();
     StartPumpControl();
     InitAuxDac();
+
+#if (PWM_OUTPUT_CHANNELS > 0)
+    InitAuxPwm();
+#endif
 
 #if TS_ENABLED
     startTunerStudioConnectivity();

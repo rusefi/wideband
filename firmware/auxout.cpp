@@ -18,6 +18,7 @@
 #ifndef AUXOUT_DAC_PWM_OUTPUT_MODE
 #define AUXOUT_DAC_PWM_OUTPUT_MODE PWM_OUTPUT_ACTIVE_HIGH
 #endif
+
 #ifndef AUXOUT_DAC_PWM_NC_OUTPUT_MODE
 #define AUXOUT_DAC_PWM_NC_OUTPUT_MODE PWM_OUTPUT_ACTIVE_LOW
 #endif
@@ -86,7 +87,7 @@ void SetAuxDac(int channel, float voltage)
 
     auxDac.SetDuty(auxOutPwmCh[channel], duty);
     // Ripple cancelation channel
-    if (auxOutPwmChN[channel >= 0]) {
+    if (auxOutPwmChN[channel] >= 0) {
         auxDac.SetDuty(auxOutPwmChN[channel], duty);
     }
 }

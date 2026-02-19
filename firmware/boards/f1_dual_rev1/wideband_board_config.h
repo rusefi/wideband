@@ -7,6 +7,11 @@
 #define AFR_CHANNELS 2
 #define EGT_CHANNELS 2
 
+// As well as two aux adcs and two low side outputs
+#define AUX_INPUT_CHANNELS  2
+#define AUX_INPUT_GAIN      ((82.0 + 160.0) / 160.0)
+#define PWM_OUTPUT_CHANNELS 2
+
 // Fundamental board constants
 #define VCC_VOLTS (3.3f)
 #define HALF_VCC (VCC_VOLTS / 2)

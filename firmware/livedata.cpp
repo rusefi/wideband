@@ -72,6 +72,8 @@ static const FragmentEntry fragments[] = {
     decl_frag<livedata_egt_s, 1>{},
 };
 
+// TODO: Add live data for AUX_INPUT channels and OD_OUTPUT channels
+
 FragmentList getFragments() {
 	return { fragments, efi::size(fragments) };
 }

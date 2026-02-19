@@ -10,6 +10,14 @@
     #define EGT_CHANNELS 0
 #endif
 
+#ifndef AUX_INPUT_CHANNELS
+    #define AUX_INPUT_CHANNELS 0
+#endif
+
+#ifndef PWM_OUTPUT_CHANNELS
+    #define PWM_OUTPUT_CHANNELS 0
+#endif
+
 // *******************************
 //    Nernst voltage & ESR sense
 // *******************************

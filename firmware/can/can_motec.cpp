@@ -148,8 +148,8 @@ union E888Data1
   struct {
     uint8_t padding : 5;
     uint8_t CompoundId : 3;
-  } flag;
-
+    uint8_t Reserved[7];
+  } flag __attribute__((packed));
 } __attribute__((packed));
 
 static_assert(sizeof(E888Data1) == 8);

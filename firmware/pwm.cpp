@@ -17,6 +17,11 @@ void Pwm::Start(const PWMConfig& config)
     pwmStart(m_driver, &config);
 }
 
+void Pwm::Stop()
+{
+    pwmStop(m_driver);
+}
+
 void Pwm::SetDuty(int channel, float duty) {
     auto dutyFloat = clampF(0, duty, 1);
     m_dutyFloat[channel] = dutyFloat;

@@ -100,9 +100,9 @@
  * PB0  - R_Heater_sense            (analog in).
  * PB1  - R_OUT_sense               (analog in).
  * PB2  - Nernsr_4.9_bias           (digital output, 2 Mhz)
- * PB3  - SPI1_SCK                  (output puspull, alternate, 50 MHz)
+ * PB3  - SPI1_SCK                  (output pushpull, alternate, 50 MHz)
  * PB4  - SPI1_MISO                 (digital input, alternate)
- * PB5  - SPI1_MOSI                 (output puspull, alternate, 50 MHz)
+ * PB5  - SPI1_MOSI                 (output pushpull, alternate, 50 MHz)
  * PB6  - R_heater_pwm              (output pushpull, alternate, 2 MHz)
  * PB7  - L_heater_pwm              (output pushpull, alternate, 2 MHz)
  * PB8  - I2C1_SCL                  (output pushpull, alternate, 50 MHz)
@@ -111,11 +111,11 @@
  * PB11 - Nernsr_4.9_esr_drive      (output pushpull, 50 Mhz)
  * PB12 - Nernsr_4.2_esr_drive      (digital input, no pull) - keep high-Z after power on
  * PB13 - L_LED_GREEN               (output pushpull, 2 MHz)
- * PB14 - L_OUT_en                  (output pushpull, 2 MHz)
- * PB15 - R_OUT_en                  (output pushpull, 2 MHz)
+ * PB14 - L_OUT_PWM                 (output pushpull, alternate, 50 MHz)
+ * PB15 - R_OUT_PWM                 (output pushpull, alternate, 50 MHz)
  */
 #define VAL_GPIOBCRL            0xAAB8B200      /*  PB7...PB0 */
-#define VAL_GPIOBCRH            0x2224348B      /* PB15...PB8 */
+#define VAL_GPIOBCRH            0xBB24348B      /* PB15...PB8 */
 #define VAL_GPIOBODR            0x00003FFF
 
 /*

@@ -25,6 +25,20 @@ float GetSupplyVoltage()
 }
 #endif
 
+#if AUX_INPUT_CHANNELS > 0
+
+static float auxInputVoltage[AUX_INPUT_CHANNELS] = {};
+float GetAuxInputVoltage(uint8_t idx)
+{
+    if (idx >= AUX_INPUT_CHANNELS) {
+        return 0.0f;
+    }
+
+    return auxInputVoltage[idx];
+}
+
+#endif
+
 static float mcuTemp = 0;
 float GetMcuTemperature()
 {
@@ -60,6 +74,13 @@ static void SamplingThread(void*)
         {
             samplers[ch].ApplySample(result.ch[ch], result.VirtualGroundVoltageInt);
         }
+
+        #if AUX_INPUT_CHANNELS > 0
+        for (int i = 0; i < AUX_INPUT_CHANNELS; i++)
+        {
+            auxInputVoltage[i] = result.AuxInputVoltage[i] * AUX_INPUT_GAIN;
+        }
+        #endif
 
 #if defined(TS_ENABLED)
         /* tunerstudio */

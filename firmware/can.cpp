@@ -42,6 +42,10 @@ void CanTxThread(void*)
             SendCanEgt();
         }
 
+        if ((cycle % 10) == 0) {
+            SendHaltechIO12Message(configuration);
+        }
+
         cycle++;
         prev = chThdSleepUntilWindowed(prev, chTimeAddX(prev, TIME_MS2I(WBO_TX_PERIOD_MS)));
     }
@@ -70,6 +74,7 @@ void CanRxThread(void*)
 
         ProcessRusefiCanMessage(&frame, configuration, &CanStatusData);
         ProcessLinkCanMessage(&frame, configuration, &CanStatusData);
+        ProcessHaltechIO12Message(&frame, configuration);
     }
 }
 

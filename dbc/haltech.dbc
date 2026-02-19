@@ -32,7 +32,7 @@ NS_ :
     SG_MUL_VAL_
 
 BS_: 
-BU_: Haltech_WB2 Haltech_TCA ECU 
+BU_: Haltech_WB2 Haltech_TCA HALTECH_IO12 ECU
 
 BO_ 688 Haltech_WB2A: 8 Haltech_WB2
    SG_ Lambda1 : 7|16@0+ (0.000976563,0) [0|64] "lambda" ECU
@@ -70,6 +70,7 @@ BO_ 696 Haltech_WB2D: 8 Haltech_WB2
    SG_ Sensor2Flags : 55|4@0+ (1,0) [0|5] "" ECU
    SG_ VBatt : 63|8@0+ (0.0784314,0) [0|20] "V" ECU
 
+
 BO_ 716 Haltech_TCA_Box1: 8 Haltech_TCA
    SG_ Egt1 : 7|16@0-  (0.407003,-250) [-250|16133.5] "degC" ECU
    SG_ Egt2 : 23|16@0- (0.407003,-250) [-250|16133.5] "degC" ECU
@@ -82,6 +83,93 @@ BO_ 717 Haltech_TCA_Box2: 8 Haltech_TCA
    SG_ Egt3 : 39|16@0- (0.407003,-250) [-250|16133.5] "degC" ECU
    SG_ Egt4 : 55|16@0- (0.407003,-250) [-250|16133.5] "degC" ECU
 
+
+BO_ 704 HALTECH_IO12_A_AVI: 8 HALTECH_IO12
+   SG_ AVI1 : 3|12@0+ (0.001221,0) [0|5] "v" ECU
+   SG_ AVI2 : 19|12@0+ (0.001221,0) [0|5] "v" ECU
+   SG_ AVI3 : 35|12@0+ (0.001221,0) [0|80] "" ECU
+   SG_ AVI4 : 51|12@0+ (0.001221,0) [0|5] "" ECU
+
+BO_ 706 HALTECH_IO12_A_DPI: 8 HALTECH_IO12
+   SG_ DPI1_duty : 7|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI1_period : 24|8@1+ (0.01,0) [0|1] "ms" ECU
+   SG_ DPI2_duty : 39|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI2_period : 56|8@1+ (0.01,0) [0|1] "ms" ECU
+   SG_ DPI1_State : 13|1@0+ (1,0) [0|1] "" ECU
+   SG_ DPI2_State : 45|1@0+ (1,0) [0|1] "" ECU
+
+BO_ 708 HALTECH_IO12_A_DPI2: 8 HALTECH_IO12
+   SG_ DPI4_duty : 39|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI3_period : 24|8@1+ (0.01,0) [0|1] "%" ECU
+   SG_ DPI3_duty : 7|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI4_period : 56|8@1+ (0.01,0) [0|1] "%" ECU
+   SG_ DPI3_state : 13|1@1+ (1,0) [0|1] "" ECU
+   SG_ DPI4_state : 45|1@1+ (1,0) [0|1] "" ECU
+
+BO_ 720 HALTECH_IO12_A_DPO12: 8 ECU
+   SG_ DPO1_duty : 7|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO2_duty : 39|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO1_period : 24|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO2_period : 56|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO1_activestate : 11|1@0+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO2_safestate : 44|1@0+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO1_safestate : 12|1@0+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO2_activestate : 43|1@0+ (1,0) [0|1] "" HALTECH_IO12
+
+BO_ 722 HALTECH_IO12_A_DPO34: 8 ECU
+   SG_ DPO3_duty : 7|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO4_duty : 39|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO3_period : 24|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO4_period : 56|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO3_safestate : 12|1@1+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO3_activestate : 11|1@1+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO4_safestate : 44|1@1+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO4_activestate : 43|1@1+ (1,0) [0|1] "" HALTECH_IO12
+
+
+BO_ 705 HALTECH_IO12_B_AVI: 8 HALTECH_IO12
+   SG_ AVI1 : 3|12@0+ (0.001221,0) [0|5] "v" ECU
+   SG_ AVI2 : 19|12@0+ (0.001221,0) [0|5] "v" ECU
+   SG_ AVI3 : 35|12@0+ (0.001221,0) [0|80] "" ECU
+   SG_ AVI4 : 51|12@0+ (0.001221,0) [0|5] "" ECU
+
+BO_ 707 HALTECH_IO12_B_DPI: 8 HALTECH_IO12
+   SG_ DPI1_duty : 7|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI1_period : 24|8@1+ (0.01,0) [0|1] "ms" ECU
+   SG_ DPI2_duty : 39|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI2_period : 56|8@1+ (0.01,0) [0|1] "ms" ECU
+   SG_ DPI1_State : 13|1@0+ (1,0) [0|1] "" ECU
+   SG_ DPI2_State : 45|1@0+ (1,0) [0|1] "" ECU
+
+BO_ 709 HALTECH_IO12_B_DPI2: 8 HALTECH_IO12
+   SG_ DPI4_duty : 39|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI3_period : 24|8@1+ (0.01,0) [0|1] "%" ECU
+   SG_ DPI3_duty : 7|8@0+ (0.1,0) [0|1] "%" ECU
+   SG_ DPI4_period : 56|8@1+ (0.01,0) [0|1] "%" ECU
+   SG_ DPI3_state : 13|1@1+ (1,0) [0|1] "" ECU
+   SG_ DPI4_state : 45|1@1+ (1,0) [0|1] "" ECU
+
+BO_ 721 HALTECH_IO12_B_DPO12: 8 ECU
+   SG_ DPO1_duty : 7|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO2_duty : 39|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO1_period : 24|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO2_period : 56|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO1_activestate : 11|1@0+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO2_safestate : 44|1@0+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO1_safestate : 12|1@0+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO2_activestate : 43|1@0+ (1,0) [0|1] "" HALTECH_IO12
+
+BO_ 723 HALTECH_IO12_B_DPO34: 8 ECU
+   SG_ DPO3_duty : 7|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO4_duty : 39|8@0+ (0.4,0) [0|1] "%" HALTECH_IO12
+   SG_ DPO3_period : 24|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO4_period : 56|8@1+ (0.01,0) [0|1] "ms" HALTECH_IO12
+   SG_ DPO3_safestate : 12|1@1+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO3_activestate : 11|1@1+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO4_safestate : 44|1@1+ (1,0) [0|1] "" HALTECH_IO12
+   SG_ DPO4_activestate : 43|1@1+ (1,0) [0|1] "" HALTECH_IO12
+
+
 CM_ BO_ 688 "Haltech WB2A";
 CM_ SG_ 688 Lambda1 "Lambda sensor 1. Value = 32767 indicates free air cal, otherwise Lambda = Value / 1024";
 CM_ SG_ 688 Lambda2 "Lambda sensor 2. Value = 32767 indicates free air cal, otherwise Lambda = Value / 1024";
@@ -93,6 +181,16 @@ CM_ BO_ 694 "Haltech WB2C";
 CM_ BO_ 696 "Haltech WB2D";
 CM_ BO_ 716 "Haltech TCA Box A (TC 1-4)";
 CM_ BO_ 717 "Haltech TCA Box B (TC 5-8)";
+CM_ BO_ 704 "Haltech IO12 Box A AVI";
+CM_ BO_ 705 "Haltech IO12 Box B AVI";
+CM_ BO_ 706 "Haltech IO12 Box A DPI";
+CM_ BO_ 707 "Haltech IO12 Box B DPI";
+CM_ BO_ 708 "Haltech IO12 Box A DPI2";
+CM_ BO_ 709 "Haltech IO12 Box B DPI2";
+CM_ BO_ 720 "Haltech IO12 Box A DPO12";
+CM_ BO_ 721 "Haltech IO12 Box B DPO12";
+CM_ BO_ 722 "Haltech IO12 Box A DPO34";
+CM_ BO_ 723 "Haltech IO12 Box B DPO34";
 BA_DEF_ "BusType" STRING ;
 BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
 BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;
@@ -107,3 +205,27 @@ VAL_ 694 Sensor1Flags 0 "None" 1 "LowBattery" 2 "HighBattery" 3 "SensorShortCirc
 VAL_ 694 Sensor2Flags 0 "None" 1 "LowBattery" 2 "HighBattery" 3 "SensorShortCircuit" 4 "SensorOpenCircuit" 5 "SensorCold";
 VAL_ 696 Sensor1Flags 0 "None" 1 "LowBattery" 2 "HighBattery" 3 "SensorShortCircuit" 4 "SensorOpenCircuit" 5 "SensorCold";
 VAL_ 696 Sensor2Flags 0 "None" 1 "LowBattery" 2 "HighBattery" 3 "SensorShortCircuit" 4 "SensorOpenCircuit" 5 "SensorCold";
+VAL_ 706 DPI1_State 0 "Off" 1 "On";
+VAL_ 706 DPI2_State 0 "Off" 1 "On";
+VAL_ 708 DPI3_state 0 "Off" 1 "On";
+VAL_ 708 DPI4_state 0 "Off" 1 "On";
+VAL_ 720 DPO1_activestate 0 "Off" 1 "On";
+VAL_ 720 DPO2_safestate 0 "Off" 1 "On";
+VAL_ 720 DPO1_safestate 0 "Off" 1 "On";
+VAL_ 720 DPO2_activestate 0 "Off" 1 "On";
+VAL_ 722 DPO3_safestate 0 "Off" 1 "On";
+VAL_ 722 DPO3_activestate 0 "Off" 1 "On";
+VAL_ 722 DPO4_safestate 0 "Off" 1 "On";
+VAL_ 722 DPO5_activestate 0 "Off" 1 "On";
+VAL_ 707 DPI1_State 0 "Off" 1 "On";
+VAL_ 707 DPI2_State 0 "Off" 1 "On";
+VAL_ 709 DPI3_state 0 "Off" 1 "On";
+VAL_ 709 DPI4_state 0 "Off" 1 "On";
+VAL_ 721 DPO1_activestate 0 "Off" 1 "On";
+VAL_ 721 DPO2_safestate 0 "Off" 1 "On";
+VAL_ 721 DPO1_safestate 0 "Off" 1 "On";
+VAL_ 721 DPO2_activestate 0 "Off" 1 "On";
+VAL_ 723 DPO3_safestate 0 "Off" 1 "On";
+VAL_ 723 DPO3_activestate 0 "Off" 1 "On";
+VAL_ 723 DPO4_safestate 0 "Off" 1 "On";
+VAL_ 723 DPO5_activestate 0 "Off" 1 "On";

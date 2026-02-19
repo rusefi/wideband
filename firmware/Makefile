@@ -166,6 +166,7 @@ CPPSRC = $(ALLCPPSRC) \
           max3185x.cpp \
           uart.cpp \
           auxout.cpp \
+          pwmout.cpp \
           indication.cpp \
           sampling_thread.cpp \
           heater_thread.cpp \

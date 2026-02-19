@@ -55,6 +55,10 @@ const ISampler& GetSampler(int ch);
 float GetSupplyVoltage();
 #endif
 
+#if AUX_INPUT_CHANNELS > 0
+float GetAuxInputVoltage(uint8_t idx);
+#endif
+
 float GetMcuTemperature();
 
 void StartSampling();

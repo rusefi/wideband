@@ -69,6 +69,19 @@
 // Riple cancelation output (should be inverted)
 #define AUXOUT_DAC_PWM_CHANNEL_1_NC	3
 
+// Hardware PWM using TIM1 for both AUX open drain outputs
+// NOTE: Both channels share the same timer, so they have the same frequency
+// but can have independent duty cycles
+// PB14 - TIM1_CH2N - AUX_OD_L
+#define AUXOUT_OD_PWM_DEVICE		PWMD1
+#define AUXOUT_OD_PWM_CHANNEL_L		1  // TIM1_CH2N
+#define AUX_OD_L_PORT				GPIOB
+#define AUX_OD_L_PIN				14
+// PB15 - TIM1_CH3N - AUX_OD_R
+#define AUXOUT_OD_PWM_CHANNEL_R		2  // TIM1_CH3N
+#define AUX_OD_R_PORT				GPIOB
+#define AUX_OD_R_PIN				15
+
 #define ID_SEL1_PORT				GPIOC
 #define ID_SEL1_PIN					13
 #define ID_SEL2_PORT				GPIOC

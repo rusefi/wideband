@@ -70,6 +70,19 @@ const ADCConversionGroup convGroup =
         ADC_SQR3_SQ6_N(7),   /* PA7 - ADC12_IN7 - L_AUX_ADC */
 };
 
+/* Given _SQX, index is X - 1 */
+#define L_HEATER_SENSE_IDX 6
+#define R_HEATER_SENSE_IDX 7
+#define R_UN_SENSE_IDX     8
+#define L_UN_SENSE_IDX     9
+#define R_IP_SENSE_IDX     0
+#define R_UN_3X_SENSE_IDX  1
+#define L_IP_SENSE_IDX     2
+#define L_UN_3X_SENSE_IDX  3
+#define R_AUX_ADC_IDX      4
+#define L_AUX_ADC_IDX      5
+
+
 static float AverageSamples(adcsample_t* buffer, size_t idx)
 {
     uint32_t sum = 0;
@@ -136,13 +149,13 @@ AnalogResult AnalogSampleFinish()
 
     if (l_heater && l_heater_new)
     {
-        float vbatt_raw = GetMaxSample(adcBuffer, 6) / HEATER_INPUT_DIVIDER;
+        float vbatt_raw = GetMaxSample(adcBuffer, L_HEATER_SENSE_IDX) / HEATER_INPUT_DIVIDER;
         l_heater_voltage = HEATER_FILTER_ALPHA * vbatt_raw + (1.0 - HEATER_FILTER_ALPHA) * l_heater_voltage;
     }
 
     if (r_heater && r_heater_new)
     {
-        float vbatt_raw = GetMaxSample(adcBuffer, 7) / HEATER_INPUT_DIVIDER;
+        float vbatt_raw = GetMaxSample(adcBuffer, R_HEATER_SENSE_IDX) / HEATER_INPUT_DIVIDER;
         r_heater_voltage = HEATER_FILTER_ALPHA * vbatt_raw + (1.0 - HEATER_FILTER_ALPHA) * r_heater_voltage;
     }
 
@@ -155,13 +168,13 @@ AnalogResult AnalogSampleFinish()
 
     for (int i = 0; i < AFR_CHANNELS; i++) {
         res.ch[i].NernstClamped = false;
-        float NernstRaw = AverageSamples(adcBuffer, (i == 0) ? 3 : 1);
+        float NernstRaw = AverageSamples(adcBuffer, (i == 0) ? L_UN_3X_SENSE_IDX : R_UN_3X_SENSE_IDX);
         if (!isClamped(NernstRaw)) {
             /* not clamped */
             res.ch[i].NernstVoltage = (NernstRaw - NERNST_INPUT_OFFSET) * (1.0 / NERNST_INPUT_GAIN);
         } else {
             /* Clamped, use ungained input */
-            NernstRaw = AverageSamples(adcBuffer, (i == 0) ? 9 : 8);
+            NernstRaw = AverageSamples(adcBuffer, (i == 0) ? L_UN_SENSE_IDX : R_UN_SENSE_IDX);
             if (isClamped(NernstRaw)) {
                 res.ch[i].NernstClamped = true;
             }
@@ -169,12 +182,16 @@ AnalogResult AnalogSampleFinish()
             res.ch[i].NernstVoltage = NernstRaw - HALF_VCC;
         }
     }
+
     /* left */
-    res.ch[0].PumpCurrentVoltage = AverageSamples(adcBuffer, 2);
+    res.ch[0].PumpCurrentVoltage = AverageSamples(adcBuffer, L_IP_SENSE_IDX);
     res.ch[0].HeaterSupplyVoltage = l_heater_voltage;
     /* right */
-    res.ch[1].PumpCurrentVoltage = AverageSamples(adcBuffer, 0);
+    res.ch[1].PumpCurrentVoltage = AverageSamples(adcBuffer, R_IP_SENSE_IDX);
     res.ch[1].HeaterSupplyVoltage = r_heater_voltage;
+
+    res.AuxInputVoltage[0] = AverageSamples(adcBuffer, L_AUX_ADC_IDX);
+    res.AuxInputVoltage[1] = AverageSamples(adcBuffer, R_AUX_ADC_IDX);
 
     return res;
 }
