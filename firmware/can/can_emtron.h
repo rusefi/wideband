@@ -7,3 +7,5 @@
 
 void SendEmtronAfrFormat(Configuration* configuration, uint8_t ch);
 void SendEmtronEgtFormat(Configuration* configuration);
+
+void SendEmtronIoFormat(Configuration* configuration);

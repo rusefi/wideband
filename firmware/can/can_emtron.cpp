@@ -222,3 +222,31 @@ void SendEmtronEgtFormat(Configuration* configuration)
 }
 
 #endif
+
+
+#define EMTRON_EIC16M_BASE_ID         0x2C1
+// Emtron does not have CAN-output devices, only input
+
+namespace emtron
+{
+    // BASE:     AV1-AV4
+    // BASE + 1: AV5-AV8
+    // BASE + 2: AV9-AV12
+    // BASE + 3: AV13-AV16
+    // BASE + 4: Freq1-Freq4
+    // BASE + 5: Value[0]: 5V Analog Supply, 0.001 V, little-endian
+    // AV: 0.001 V, little-endian
+    // Freq: 0.1 Hz, little-endian
+    struct EIC16MData
+    {
+        uint16_t Value[4];
+    } __attribute__((packed));
+
+    static_assert(sizeof(EIC16MData) == 8);
+}
+
+void SendEmtronIoFormat(Configuration* configuration)
+{
+    (void)configuration;
+    // TODO: Implement sending inputs data
+}
