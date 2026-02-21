@@ -64,6 +64,7 @@ enum class AuxOutputMode : uint8_t {
     Egt1 = 5,
 };
 
+// These values are kept in sync just for convenience
 enum class CanAfrProtocol : uint8_t {
     None = 0,
     AemNet = 1,
@@ -84,6 +85,12 @@ enum class CanEgtProtocol : uint8_t {
     Motec = 6,
     Emtron = 7,
     AemNet2224 = 8,
+};
+
+enum class CanIoProtocol : uint8_t {
+    None = 0,
+    Haltech = 3,
+    Emtron = 7,
 };
 
 class Configuration {
@@ -145,6 +152,11 @@ public:
         heaterConfig.HeaterSupplyOffVoltage = HEATER_SUPPLY_OFF_VOLTAGE;
         heaterConfig.HeaterSupplyOnVoltage = HEATER_SUPPLY_ON_VOLTAGE;
         heaterConfig.PreheatTimeSec = HEATER_PREHEAT_TIME;
+
+        ioExpanderConfig.Protocol = CanIoProtocol::None;
+        ioExpanderConfig.Offset = 0;
+        ioExpanderConfig.IOInputsEnabled = 0xFFFF;  // All inputs enabled by default
+        ioExpanderConfig.IOOutputsEnabled = 0xFFFF; // All outputs enabled by default
         
         /* Finaly */
         Tag = ExpectedTag;
@@ -186,6 +198,16 @@ public:
             } egt[2];
 
             struct HeaterConfig heaterConfig;
+
+            struct {
+                CanIoProtocol Protocol: 5;
+                uint8_t Reserved0: 3;
+                uint8_t Offset;
+                uint16_t IOInputsEnabled;  // Bitmask of which inputs should be reported in CAN messages
+                uint16_t IOOutputsEnabled; // Bitmask of which outputs should be controlled via CAN messages
+                uint8_t Reserved1[2];
+            } ioExpanderConfig;
+
         } __attribute__((packed));
 
         // pad to 256 bytes including tag

@@ -161,10 +161,7 @@ namespace haltech
 // ID: Box A 0x2C0 (704), Box B 0x2C1 (705)
 struct AviData
 {
-    beuint16_t AVI1; // Clamped to 4095 (0-5V scaled to 0-4095) in big-endian format
-    beuint16_t AVI2;
-    beuint16_t AVI3;
-    beuint16_t AVI4;
+    beuint16_t AVI[4]; // Clamped to 4095 (0-5V scaled to 0-4095) in big-endian format
 } __attribute__((packed));
 
 static_assert(sizeof(AviData) == 8);
@@ -219,29 +216,19 @@ void SendHaltechIO12Message(Configuration* configuration)
     
     CanTxTyped<haltech::AviData> frame(id, true);
 
-    #if AUX_INPUT_CHANNELS > 0
-        float voltage = GetAuxInputVoltage(0);
-        uint16_t raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF; // Scale 0-5V to 0-4095
-        frame->AVI1 = raw;
-    #endif
-    
-    #if AUX_INPUT_CHANNELS > 1
-        voltage = GetAuxInputVoltage(1);
-        raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF;
-        frame->AVI2 = raw;
-    #endif
-    
-    #if AUX_INPUT_CHANNELS > 2
-        voltage = GetAuxInputVoltage(2);
-        raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF;
-        frame->AVI3 = raw;
-    #endif
-    
-    #if AUX_INPUT_CHANNELS > 3
-        voltage = GetAuxInputVoltage(3);
-        raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF;
-        frame->AVI4 = raw;
-    #endif
+    for (uint8_t i = 0; i < AUX_INPUT_CHANNELS && i < 4; i++)
+    {
+        if (configuration->ioExpanderConfig.IOInputsEnabled & (1 << i))
+        {
+            float voltage = GetAuxInputVoltage(i);
+            uint16_t raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF; // Scale 0-5V to 0-4095
+            frame.get().AVI[i] = raw;
+        }
+        else
+        {
+            frame.get().AVI[i] = 0; // Input disabled, report as 0V
+        }
+    }
 
     // DPI messages would go here if we had digital pulse input hardware
     // For now, this is left as a stub for future implementation
@@ -310,8 +297,13 @@ void ProcessHaltechIO12Message(const CANRxFrame* frame, Configuration* configura
     }
 
     // Process both channels in this message
-    ProcessDpoChannel(&dpo->channels[0], baseChannel);
-    ProcessDpoChannel(&dpo->channels[1], baseChannel + 1);
+    if (configuration->ioExpanderConfig.IOOutputsEnabled & (1 << baseChannel)) {
+        ProcessDpoChannel(&dpo->channels[0], baseChannel);
+    }
+    
+    if (configuration->ioExpanderConfig.IOOutputsEnabled & (1 << (baseChannel + 1))) {
+        ProcessDpoChannel(&dpo->channels[1], baseChannel + 1);
+    }
 }
 
 #else

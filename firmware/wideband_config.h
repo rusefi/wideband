@@ -18,6 +18,9 @@
     #define PWM_OUTPUT_CHANNELS 0
 #endif
 
+#if (AUX_INPUT_CHANNELS > 0) || (PWM_OUTPUT_CHANNELS > 0) && !defined(IO_EXPANDER_ENABLED)
+    #define IO_EXPANDER_ENABLED 1
+#endif
 // *******************************
 //    Nernst voltage & ESR sense
 // *******************************

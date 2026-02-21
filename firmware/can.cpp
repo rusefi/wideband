@@ -42,8 +42,9 @@ void CanTxThread(void*)
             SendCanEgt();
         }
 
+        // IO Expander - 10 Hz
         if ((cycle % 10) == 0) {
-            SendHaltechIO12Message(configuration);
+            SendCanIoExpander();
         }
 
         cycle++;
@@ -73,8 +74,21 @@ void CanRxThread(void*)
         }
 
         ProcessRusefiCanMessage(&frame, configuration, &CanStatusData);
-        ProcessLinkCanMessage(&frame, configuration, &CanStatusData);
-        ProcessHaltechIO12Message(&frame, configuration);
+        
+        // TODO: Re-enable after testing
+        // ProcessLinkCanMessage(&frame, configuration, &CanStatusData);
+
+        switch (configuration->ioExpanderConfig.Protocol)
+        {
+            case CanIoProtocol::Haltech:
+                ProcessHaltechIO12Message(&frame, configuration);
+                break;
+            case CanIoProtocol::Emtron:
+                // ProcessEmtronIoExpanderMessage(&frame, configuration);
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -163,4 +177,19 @@ __attribute__((weak)) void SendCanEgt()
             break;
     }
 #endif
+}
+
+__attribute__((weak)) void SendCanIoExpander()
+{
+    switch (configuration->ioExpanderConfig.Protocol)
+    {
+        case CanIoProtocol::Haltech:
+            SendHaltechIO12Message(configuration);
+            break;
+        case CanIoProtocol::Emtron:
+            // SendEmtronIoExpanderFormat(configuration);
+            break;
+        default:
+            break;
+    }
 }
