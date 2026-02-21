@@ -5,6 +5,7 @@
 
 #include "status.h"
 #include "can_helper.h"
+#include "can/base_protocol_handler.h"
 #include "can/can_rusefi.h"
 #include "can/can_aemnet.h"
 #include "can/can_ecumaster.h"
@@ -15,47 +16,80 @@
 
 #include "port.h"
 
-#include <rusefi/math.h>
+#include <cstddef>
 
 
 static Configuration* configuration;
 
+static struct CanStatusData canStatusData = {
+    .heaterAllow = HeaterAllow::Unknown,
+    .remoteBatteryVoltage = 0.0f,
+};
+
+static BaseProtocolHandler* const TxHandlers[] = {
+    #if (AFR_CHANNELS > 0)
+    &rusefiAfrTxHandler,
+    &aemNetAfrTxHandler,
+    &ecuMasterAfrTxHandler,
+    &haltechAfrTxHandler,
+    &emtronAfrTxHandler,
+    &motecAfrTxHandler,
+    &linkAfrTxHandler,
+    #endif
+
+    #if (EGT_CHANNELS > 0)
+    &aemNet0305EgtTxHandler,
+    &aemNet2224EgtTxHandler,
+    &ecuMasterClassicEgtTxHandler,
+    &ecuMasterBlackEgtTxHandler,
+    &haltechEgtTxHandler,
+    &linkEgtTxHandler,
+    &emtronEgtTxHandler,
+    #endif
+
+    #if (IO_EXPANDER_ENABLED > 0)
+    &haltechIoTxHandler,
+    &emtronIoTxHandler,
+    #endif
+
+    #if (MOTEC_E888_ENABLED > 0)
+    &motecE888TxHandler,
+    #endif
+};
+
+__attribute__((weak)) void SendCanData(uint32_t elapsedMs)
+{
+    for (auto* handler : TxHandlers) {
+        handler->dispatch(elapsedMs, configuration);
+    }
+}
+
+__attribute__((weak)) void ProcessCanMessage(const CANRxFrame* frame)
+{
+    ProcessRusefiCanMessage(frame, configuration, &canStatusData);
+    ProcessLinkCanMessage(frame, configuration, &canStatusData);
+    ProcessHaltechIO12Message(frame, configuration);
+}
+
 static THD_WORKING_AREA(waCanTxThread, 512);
 void CanTxThread(void*)
 {
-    int cycle = 0;
     chRegSetThreadName("CAN Tx");
 
     // Current system time.
     systime_t prev = chVTGetSystemTime();
+    uint32_t prevMs = TIME_I2MS(prev);
 
     while(1)
     {
-        // AFR - 100 Hz
-        for (int ch = 0; ch < AFR_CHANNELS; ch++)
-        {
-            SendCanForChannel(ch);
-        }
+        uint32_t nowMs = TIME_I2MS(chVTGetSystemTime());
+        uint32_t elapsedMs = nowMs - prevMs;
+        prevMs = nowMs;
+        SendCanData(elapsedMs);
 
-        // EGT - 20 Hz
-        if ((cycle % 5) == 0) {
-            SendCanEgt();
-        }
-
-        // IO Expander - 10 Hz
-        if ((cycle % 10) == 0) {
-            SendCanIoExpander();
-        }
-
-        cycle++;
         prev = chThdSleepUntilWindowed(prev, chTimeAddX(prev, TIME_MS2I(WBO_TX_PERIOD_MS)));
     }
 }
-
-static struct CanStatusData CanStatusData = {
-    .heaterAllow = HeaterAllow::Unknown,
-    .remoteBatteryVoltage = 0.0f,
-};
 
 static THD_WORKING_AREA(waCanRxThread, 512);
 void CanRxThread(void*)
@@ -73,33 +107,18 @@ void CanRxThread(void*)
             continue;
         }
 
-        ProcessRusefiCanMessage(&frame, configuration, &CanStatusData);
-        
-        // TODO: Re-enable after testing
-        // ProcessLinkCanMessage(&frame, configuration, &CanStatusData);
-
-        switch (configuration->ioExpanderConfig.Protocol)
-        {
-            case CanIoProtocol::Haltech:
-                ProcessHaltechIO12Message(&frame, configuration);
-                break;
-            case CanIoProtocol::Emtron:
-                // ProcessEmtronIoExpanderMessage(&frame, configuration);
-                break;
-            default:
-                break;
-        }
+        ProcessCanMessage(&frame);
     }
 }
 
 HeaterAllow GetHeaterAllowed()
 {
-    return CanStatusData.heaterAllow;
+    return canStatusData.heaterAllow;
 }
 
 float GetRemoteBatteryVoltage()
 {
-    return CanStatusData.remoteBatteryVoltage;
+    return canStatusData.remoteBatteryVoltage;
 }
 
 void InitCan()
@@ -109,87 +128,4 @@ void InitCan()
     canStart(&CAND1, &GetCanConfig(configuration->CanMode));
     chThdCreateStatic(waCanTxThread, sizeof(waCanTxThread), NORMALPRIO, CanTxThread, nullptr);
     chThdCreateStatic(waCanRxThread, sizeof(waCanRxThread), NORMALPRIO - 4, CanRxThread, nullptr);
-}
-
-
-// Weak link so boards can override it
-__attribute__((weak)) void SendCanForChannel(uint8_t ch)
-{
-    SendRusefiFormat(configuration, ch);
-
-    switch (configuration->afr[ch].ExtraCanProtocol)
-    {
-        case CanAfrProtocol::AemNet:
-            SendAemNetUEGOFormat(configuration, ch);
-            break;
-        case CanAfrProtocol::EcuMaster:
-            SendEcuMasterAfrFormat(configuration, ch);
-            break;
-        case CanAfrProtocol::Haltech:
-            SendHaltechAfrFormat(configuration, ch);
-            break;
-        case CanAfrProtocol::LinkEcu:
-            SendLinkAfrFormat(configuration, ch);
-            break;
-        case CanAfrProtocol::Emtron:
-            SendEmtronAfrFormat(configuration, ch);
-            break;
-        case CanAfrProtocol::Motec:
-            SendMotecAfrFormat(configuration, ch);
-            break;
-        default:
-            break;
-    }
-}
-
-__attribute__((weak)) void SendCanEgt()
-{
-#if (EGT_CHANNELS > 0)
-
-    SendRusefiEgtFormat(configuration);
-
-    // Look at channel 0 EGT protocol
-    switch (configuration->egt[0].ExtraCanProtocol)
-    {
-        case CanEgtProtocol::AemNet0305:
-            SendAemNetEGT0305Format(configuration);
-            break;
-        case CanEgtProtocol::AemNet2224:
-            SendAemNetEGT2224Format(configuration);
-            break;
-        case CanEgtProtocol::EcuMasterClassic:
-        case CanEgtProtocol::EcuMasterBlack:
-            SendEcuMasterEgtFormat(configuration);
-            break;
-        case CanEgtProtocol::Haltech:
-            SendHaltechEgtFormat(configuration);
-            break;
-        case CanEgtProtocol::LinkEcu:
-            SendLinkEgtFormat(configuration);
-            break;
-        case CanEgtProtocol::Emtron:
-            SendEmtronEgtFormat(configuration);
-            break;
-        case CanEgtProtocol::Motec:
-            SendMotec888Format(configuration);
-            break;
-        default:
-            break;
-    }
-#endif
-}
-
-__attribute__((weak)) void SendCanIoExpander()
-{
-    switch (configuration->ioExpanderConfig.Protocol)
-    {
-        case CanIoProtocol::Haltech:
-            SendHaltechIO12Message(configuration);
-            break;
-        case CanIoProtocol::Emtron:
-            // SendEmtronIoExpanderFormat(configuration);
-            break;
-        default:
-            break;
-    }
 }

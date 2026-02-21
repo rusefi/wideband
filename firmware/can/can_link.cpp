@@ -267,3 +267,6 @@ void ProcessLinkCanMessage(const CANRxFrame* frame, Configuration* configuration
         }
     }
 }
+
+AfrHandler linkAfrTxHandler(CanAfrProtocol::LinkEcu, 10, SendLinkAfrFormat);
+EgtHandler linkEgtTxHandler(CanEgtProtocol::LinkEcu, 50, SendLinkEgtFormat);

@@ -250,3 +250,7 @@ void SendEmtronIoFormat(Configuration* configuration)
     (void)configuration;
     // TODO: Implement sending inputs data
 }
+
+AfrHandler emtronAfrTxHandler(CanAfrProtocol::Emtron, 10, SendEmtronAfrFormat);
+EgtHandler emtronEgtTxHandler(CanEgtProtocol::Emtron, 50, SendEmtronEgtFormat);
+IoHandler emtronIoTxHandler(CanIoProtocol::Emtron, 100, SendEmtronIoFormat);

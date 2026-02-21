@@ -1,11 +1,12 @@
 #pragma once
 
+
 #include <cstdint>
 
 #include "hal.h"
+#include "base_protocol_handler.h"
 #include "port.h"
 
-void SendEmtronAfrFormat(Configuration* configuration, uint8_t ch);
-void SendEmtronEgtFormat(Configuration* configuration);
-
-void SendEmtronIoFormat(Configuration* configuration);
+extern AfrHandler emtronAfrTxHandler;
+extern EgtHandler emtronEgtTxHandler;
+extern IoHandler emtronIoTxHandler;

@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "hal.h"
+
 void InitCan();
 
 enum class HeaterAllow {
@@ -18,10 +20,9 @@ enum class HeaterAllow {
 HeaterAllow GetHeaterAllowed();
 float GetRemoteBatteryVoltage();
 
-// implement this for your board if you want some non-standard behavior
-void SendCanForChannel(uint8_t ch);
-void SendCanEgt();
-void SendCanIoExpander();
+// Weak hooks - boards can override to customize protocol dispatch
+void SendCanData(uint32_t elapsedMs);
+void ProcessCanMessage(const CANRxFrame* frame);
 
 // Helpers to support both bxCAN and CANFD peripherals
 #ifdef STM32G4XX

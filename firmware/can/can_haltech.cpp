@@ -53,20 +53,10 @@ static_assert(sizeof(AfrData1) == 8);
 } //namespace haltech
 
 
-void SendHaltechAfrFormat(Configuration* configuration, uint8_t ch)
+void SendHaltechAfrFormat(Configuration* configuration)
 {
-    // If channel 0 is configured for Haltech, channel 1 data is sent in the same message
-    if (ch == 1 && configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech)
-        return;
-
-    uint8_t channel0enabled = configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech;
-
-    #if AFR_CHANNELS > 1
-    uint8_t channel1enabled = configuration->afr[1].ExtraCanProtocol == CanAfrProtocol::Haltech;
-    #endif
-
     auto id = HALTECH_WB2_BASE_ID; // WB2A
-    switch (configuration->afr[ch].ExtraCanIdOffset) {
+    switch (configuration->afr[0].ExtraCanIdOffset) {
         case 1:
             id += 4; break; // WB2B
         case 2:
@@ -79,26 +69,26 @@ void SendHaltechAfrFormat(Configuration* configuration, uint8_t ch)
 
     float vbatt = 0;
 
-    if (channel0enabled) {
+    if (configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech) {
         const auto& sampler0 = GetSampler(0);
         float lambda1 = GetLambda(0);
-        frame.get().Lambda1 = LambdaIsValid(0, lambda1) ? lambda1 * 1024 : 0;
-        frame.get().RSense1 = sampler0.GetSensorInternalResistance();
+        frame->Lambda1 = LambdaIsValid(0, lambda1) ? lambda1 * 1024 : 0;
+        frame->RSense1 = sampler0.GetSensorInternalResistance();
 
-        frame.get().Sensor1Flags = haltech::SensorFlags::None;
+        frame->Sensor1Flags = haltech::SensorFlags::None;
 
         vbatt = sampler0.GetInternalHeaterVoltage();
     }
     
     #if (AFR_CHANNELS > 1)
 
-    if (channel1enabled) {
+    if (configuration->afr[1].ExtraCanProtocol == CanAfrProtocol::Haltech) {
         const auto& sampler2 = GetSampler(1);
         float lambda2 = GetLambda(1);
-        frame.get().Lambda2 = LambdaIsValid(1, lambda2) ? lambda2 * 1024 : 0;
-        frame.get().RSense2 = sampler2.GetSensorInternalResistance();
+        frame->Lambda2 = LambdaIsValid(1, lambda2) ? lambda2 * 1024 : 0;
+        frame->RSense2 = sampler2.GetSensorInternalResistance();
 
-        frame.get().Sensor2Flags = haltech::SensorFlags::None;
+        frame->Sensor2Flags = haltech::SensorFlags::None;
         float vbatt2 = sampler2.GetInternalHeaterVoltage();
 
         if (vbatt2 > vbatt) {
@@ -108,7 +98,7 @@ void SendHaltechAfrFormat(Configuration* configuration, uint8_t ch)
 
     #endif
     
-    frame.get().VBatt = vbatt * 255.0 / 20.0f;
+    frame->VBatt = vbatt * 255.0 / 20.0f;
 }
 
 #if (EGT_CHANNELS > 0)
@@ -142,11 +132,12 @@ void SendHaltechEgtFormat(Configuration* configuration)
         if (!configuration->egt[i].ExtraCanChannelEnabled)
             continue;
 
-        frame.get().Egt[i] = (getEgtDrivers()[i].temperature + 250.0f) * 5850.0f / 2381.0f;
+        frame->Egt[i] = (getEgtDrivers()[i].temperature + 250.0f) * 5850.0f / 2381.0f;
     }
 }
 
 #endif
+
 
 #if ((AUX_INPUT_CHANNELS > 0) || (PWM_OUTPUT_CHANNELS > 0))
 
@@ -222,11 +213,11 @@ void SendHaltechIO12Message(Configuration* configuration)
         {
             float voltage = GetAuxInputVoltage(i);
             uint16_t raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF; // Scale 0-5V to 0-4095
-            frame.get().AVI[i] = raw;
+            frame->AVI[i] = raw;
         }
         else
         {
-            frame.get().AVI[i] = 0; // Input disabled, report as 0V
+            frame->AVI[i] = 0; // Input disabled, report as 0V
         }
     }
 
@@ -322,3 +313,13 @@ void ProcessHaltechIO12Message(const CANRxFrame* frame, Configuration* configura
 }
 
 #endif
+
+
+static bool IsHaltechAfrEnabled(const Configuration* cfg)
+{
+    return cfg->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech;
+}
+
+CallbackHandler haltechAfrTxHandler(10, IsHaltechAfrEnabled, SendHaltechAfrFormat);
+EgtHandler haltechEgtTxHandler(CanEgtProtocol::Haltech, 50, SendHaltechEgtFormat);
+IoHandler haltechIoTxHandler(CanIoProtocol::Haltech, 100, SendHaltechIO12Message);

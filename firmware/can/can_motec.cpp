@@ -159,7 +159,6 @@ static_assert(sizeof(E888Data1) == 8);
 void SendMotec888Format(Configuration* configuration)
 {
     auto id = MOTEC_E888_BASE_ID + configuration->egt[0].ExtraCanIdOffset;
-    const auto egtDrivers = getEgtDrivers();
 
     CanTxTyped<motec::E888Data1> frame(id, true);
 
@@ -170,6 +169,9 @@ void SendMotec888Format(Configuration* configuration)
 
     #endif
 
+    #if (EGT_CHANNELS > 0)
+    const auto egtDrivers = getEgtDrivers();
+
     if (configuration->egt[0].ExtraCanChannelEnabled) {
         frame->data.Value3 = egtDrivers[0].temperature * 4; // TC1, Convert to 0.25 C resolution
     }
@@ -178,6 +180,7 @@ void SendMotec888Format(Configuration* configuration)
     if (configuration->egt[1].ExtraCanChannelEnabled) {
         frame->data.Value4 = egtDrivers[1].temperature * 4; // TC2
     }
+    #endif
     #endif
 
     // Setting flag last to avoid Value1 overlap
@@ -188,4 +191,22 @@ void SendMotec888Format(Configuration* configuration)
 
 #endif
 
+static bool IsMotecE888Enabled(const Configuration* cfg)
+{
+#if (EGT_CHANNELS > 0)
+    if (cfg->egt[0].ExtraCanProtocol == CanEgtProtocol::Motec) {
+        return true;
+    }
+#endif
+#if (IO_EXPANDER_ENABLED > 0)
+    if (cfg->ioExpanderConfig.Protocol == CanIoProtocol::Motec) {
+        return true;
+    }
+#endif
+    (void)cfg;
+    return false;
+}
+
+AfrHandler motecAfrTxHandler(CanAfrProtocol::Motec, 10, SendMotecAfrFormat);
+CallbackHandler motecE888TxHandler(50, IsMotecE888Enabled, SendMotec888Format);
 

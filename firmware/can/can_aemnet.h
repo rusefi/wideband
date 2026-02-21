@@ -1,11 +1,12 @@
 #pragma once
 
+
 #include <cstdint>
 
 #include "hal.h"
+#include "base_protocol_handler.h"
 #include "port.h"
 
-void SendAemNetUEGOFormat(Configuration* cfg, uint8_t ch);
-
-void SendAemNetEGT0305Format(Configuration* cfg);
-void SendAemNetEGT2224Format(Configuration* cfg);
+extern AfrHandler aemNetAfrTxHandler;
+extern EgtHandler aemNet0305EgtTxHandler;
+extern EgtHandler aemNet2224EgtTxHandler;

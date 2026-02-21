@@ -153,3 +153,7 @@ void SendAemNetEGT2224Format(Configuration* cfg)
 }
 
 #endif /* EGT_CHANNELS > 0 */
+
+AfrHandler aemNetAfrTxHandler(CanAfrProtocol::AemNet, 10, SendAemNetUEGOFormat);
+EgtHandler aemNet0305EgtTxHandler(CanEgtProtocol::AemNet0305, 50, SendAemNetEGT0305Format);
+EgtHandler aemNet2224EgtTxHandler(CanEgtProtocol::AemNet2224, 50, SendAemNetEGT2224Format);

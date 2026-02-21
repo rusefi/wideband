@@ -90,6 +90,7 @@ enum class CanEgtProtocol : uint8_t {
 enum class CanIoProtocol : uint8_t {
     None = 0,
     Haltech = 3,
+    Motec = 6,
     Emtron = 7,
 };
 

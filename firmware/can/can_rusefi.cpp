@@ -73,16 +73,6 @@ void SendRusefiFormat(Configuration* configuration, uint8_t ch)
 }
 
 
-#if (EGT_CHANNELS > 0)
-
-void SendRusefiEgtFormat(Configuration* configuration)
-{
-    // TODO: Implement RusEFI EGT format
-    (void)configuration;
-}
-
-#endif
-
 void ProcessRusefiCanMessage(const CANRxFrame* frame, Configuration* configuration, struct CanStatusData* statusData)
 {
     // Ignore std frames, only listen to ext
@@ -160,3 +150,18 @@ void ProcessRusefiCanMessage(const CANRxFrame* frame, Configuration* configurati
         SendAck();
     }
 }
+
+static bool rusefi_afr_enabled(const Configuration*)
+{
+    return true;
+}
+
+static void send_afr_messages(Configuration* configuration)
+{
+    for (uint8_t ch = 0; ch < AFR_CHANNELS; ch++)
+    {
+        SendRusefiFormat(configuration, ch);
+    }
+}
+
+CallbackHandler rusefiAfrTxHandler(10, rusefi_afr_enabled, send_afr_messages);

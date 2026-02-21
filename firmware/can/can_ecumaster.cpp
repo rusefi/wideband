@@ -147,3 +147,7 @@ void SendEcuMasterEgtFormat(Configuration* configuration)
 }
 
 #endif
+
+AfrHandler ecuMasterAfrTxHandler(CanAfrProtocol::EcuMaster, 10, SendEcuMasterAfrFormat);
+EgtHandler ecuMasterClassicEgtTxHandler(CanEgtProtocol::EcuMasterClassic, 50, SendEcuMasterEgtFormat);
+EgtHandler ecuMasterBlackEgtTxHandler(CanEgtProtocol::EcuMasterBlack, 50, SendEcuMasterEgtFormat);
