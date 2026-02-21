@@ -4,6 +4,7 @@
 
 #include "hal.h"
 #include "port.h"
+#include "base_protocol_handler.h"
 
-void SendMsIoBoxFormat(Configuration* cfg);
-void HandleMsIoBoxCanMessage(const CANRxFrame* msg, Configuration* configuration, struct CanStatusData* statusData);
+void ProcessMsIoBoxCanMessage(const CANRxFrame* msg, Configuration* configuration);
+extern IoHandler msIoBoxTxHandler;

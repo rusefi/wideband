@@ -43,8 +43,9 @@ public:
         send_message(configuration);
     }
 
+    uint16_t m_intervalMs;
+
 private:
-    const uint16_t m_intervalMs;
     uint32_t m_elapsedSinceDispatchMs = 0;
 };
 

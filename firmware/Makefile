@@ -157,6 +157,7 @@ CPPSRC = $(ALLCPPSRC) \
           can/can_link.cpp \
           can/can_motec.cpp \
           can/can_rusefi.cpp \
+          can/can_msiobox.cpp \
           status.cpp \
           lambda_conversion.cpp \
           pwm.cpp \

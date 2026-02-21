@@ -158,7 +158,22 @@ static_assert(sizeof(E888Data1) == 8);
 
 void SendMotec888Format(Configuration* configuration)
 {
-    auto id = MOTEC_E888_BASE_ID + configuration->egt[0].ExtraCanIdOffset;
+    auto id = MOTEC_E888_BASE_ID;
+    auto offset = 0;
+
+    #if (EGT_CHANNELS > 0)
+        if (configuration->egt[0].ExtraCanProtocol == CanEgtProtocol::Motec) {
+            offset = configuration->egt[0].ExtraCanIdOffset;
+        }
+    #endif
+
+    #if (IO_EXPANDER_ENABLED > 0)
+        if (configuration->ioExpanderConfig.Protocol == CanIoProtocol::Motec) {
+            offset += configuration->ioExpanderConfig.Offset;
+        }
+    #endif
+
+    id += offset;
 
     CanTxTyped<motec::E888Data1> frame(id, true);
 

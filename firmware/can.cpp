@@ -13,6 +13,7 @@
 #include "can/can_link.h"
 #include "can/can_emtron.h"
 #include "can/can_motec.h"
+#include "can/can_msiobox.h"
 
 #include "port.h"
 
@@ -50,6 +51,7 @@ static BaseProtocolHandler* const TxHandlers[] = {
     #if (IO_EXPANDER_ENABLED > 0)
     &haltechIoTxHandler,
     &emtronIoTxHandler,
+    &msIoBoxTxHandler,
     #endif
 
     #if (MOTEC_E888_ENABLED > 0)
@@ -69,6 +71,7 @@ __attribute__((weak)) void ProcessCanMessage(const CANRxFrame* frame)
     ProcessRusefiCanMessage(frame, configuration, &canStatusData);
     ProcessLinkCanMessage(frame, configuration, &canStatusData);
     ProcessHaltechIO12Message(frame, configuration);
+    ProcessMsIoBoxCanMessage(frame, configuration);
 }
 
 static THD_WORKING_AREA(waCanTxThread, 512);

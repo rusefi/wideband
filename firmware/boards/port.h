@@ -62,6 +62,7 @@ enum class AuxOutputMode : uint8_t {
     Lambda1 = 3,
     Egt0 = 4,
     Egt1 = 5,
+    IOExpander = 6,
 };
 
 // These values are kept in sync just for convenience
@@ -92,6 +93,7 @@ enum class CanIoProtocol : uint8_t {
     Haltech = 3,
     Motec = 6,
     Emtron = 7,
+    MsIoBox = 9,
 };
 
 class Configuration {
@@ -206,7 +208,7 @@ public:
                 uint8_t Offset;
                 uint16_t IOInputsEnabled;  // Bitmask of which inputs should be reported in CAN messages
                 uint16_t IOOutputsEnabled; // Bitmask of which outputs should be controlled via CAN messages
-                uint8_t Reserved1[2];
+                uint8_t Reserved1[10];
             } ioExpanderConfig;
 
         } __attribute__((packed));
