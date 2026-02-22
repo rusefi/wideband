@@ -255,8 +255,26 @@ namespace emtron
 
 void SendEmtronIoFormat(Configuration* configuration)
 {
-    (void)configuration;
-    // TODO: Implement sending inputs data
+    auto id = EMTRON_EIC16M_BASE_ID + configuration->afr[0].ExtraCanIdOffset;
+    
+    CanTxTyped<emtron::EIC16MData> frame(id, true);
+
+    // Handle first 4 channels for now
+    constexpr uint8_t channels = AUX_INPUT_CHANNELS > 4 ? 4 : AUX_INPUT_CHANNELS;
+
+    for (uint8_t i = 0; i < channels; i++)
+    {
+        if (configuration->ioExpanderConfig.IOInputsEnabled & (1 << i))
+        {
+            float voltage = GetAuxInputVoltage(i);
+            uint16_t raw = (uint16_t)(voltage * 1000);
+            frame->Value[i] = raw;
+        }
+        else
+        {
+            frame->Value[i] = 0; // Input disabled, report as 0V
+        }
+    }
 }
 
 constexpr ProtocolHandler emtronIoTxHandler = MakeProtocolHandler<&SendEmtronIoFormat>(EMTRON_IO_TX_PERIOD_MS);
