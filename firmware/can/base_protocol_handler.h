@@ -58,8 +58,8 @@ constexpr ProtocolHandler MakeProtocolHandler(uint16_t intervalMs)
 
 inline void DispatchProtocolHandler(
     const ProtocolHandler& handler,
-    uint32_t elapsedMs,
-    uint32_t& elapsedSinceDispatchMs,
+    uint16_t elapsedMs,
+    uint16_t& elapsedSinceDispatchMs,
     Configuration* configuration,
     uint8_t channel)
 {
@@ -74,8 +74,8 @@ inline void DispatchProtocolHandler(
 
 inline void DispatchProtocolHandler(
     const ProtocolHandler& handler,
-    uint32_t elapsedMs,
-    uint32_t& elapsedSinceDispatchMs,
+    uint16_t elapsedMs,
+    uint16_t& elapsedSinceDispatchMs,
     Configuration* configuration)
 {
     DispatchProtocolHandler(handler, elapsedMs, elapsedSinceDispatchMs, configuration, kUnusedChannel);

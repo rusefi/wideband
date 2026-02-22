@@ -28,14 +28,15 @@ static struct CanStatusData canStatusData = {
 };
 
 
-__attribute__((weak)) void SendCanData(uint32_t elapsedMs)
+__attribute__((weak)) void SendCanData(uint16_t elapsedMs)
 {
     #if (AFR_CHANNELS > 0)
-    static uint32_t elapsedSinceRusefiAfrTxMs[AFR_CHANNELS] = {0};
-    static uint32_t elapsedSinceExtraCanTxMs[AFR_CHANNELS] = {0};
+    // f0 memory is tight, so we keep this as an array of timers
+    // otherwise padding eats up more ram
+    static uint16_t elapsedSinceAfrTxMs[AFR_CHANNELS * 2] = {0};
 
     for (size_t i = 0; i < AFR_CHANNELS; i++) {
-        DispatchProtocolHandler(rusefiAfrTxHandler, elapsedMs, elapsedSinceRusefiAfrTxMs[i], configuration, i);
+        DispatchProtocolHandler(rusefiAfrTxHandler, elapsedMs, elapsedSinceAfrTxMs[i], configuration, i);
         const ProtocolHandler* extraHandler = nullptr;
 
         switch (configuration->afr[i].ExtraCanProtocol) {
@@ -58,22 +59,22 @@ __attribute__((weak)) void SendCanData(uint32_t elapsedMs)
                 break;
         }
         if (extraHandler) {
-            DispatchProtocolHandler(*extraHandler, elapsedMs, elapsedSinceExtraCanTxMs[i], configuration, i);
+            DispatchProtocolHandler(*extraHandler, elapsedMs, elapsedSinceAfrTxMs[i + AFR_CHANNELS], configuration, i);
         }
     }
 
     // Handle Haltech separately since it sends both AFR channels in the same message
     if (configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech
         || configuration->afr[1].ExtraCanProtocol == CanAfrProtocol::Haltech) {
-        DispatchProtocolHandler(haltechAfrTxHandler, elapsedMs, elapsedSinceExtraCanTxMs[0], configuration);
+        DispatchProtocolHandler(haltechAfrTxHandler, elapsedMs, elapsedSinceAfrTxMs[0], configuration);
     }
 
     #endif
 
     #if (EGT_CHANNELS > 0)
 
-    static uint32_t elapsedSinceEgtTxMs = 0;
-    ProtocolHandler* egtHandler = nullptr;
+    static uint16_t elapsedSinceEgtTxMs = 0;
+    const ProtocolHandler* egtHandler = nullptr;
     switch (configuration->egt[0].ExtraCanProtocol) {
         case CanEgtProtocol::AemNet0305:
             egtHandler = &aemNet0305EgtTxHandler;
@@ -107,8 +108,8 @@ __attribute__((weak)) void SendCanData(uint32_t elapsedMs)
 
     #if (IO_EXPANDER_ENABLED > 0)
 
-    static uint32_t elapsedSinceIoExpanderTxMs = 0;
-    ProtocolHandler* ioExpanderHandler = nullptr;
+    static uint16_t elapsedSinceIoExpanderTxMs = 0;
+    const ProtocolHandler* ioExpanderHandler = nullptr;
     switch (configuration->ioExpanderConfig.Protocol) {
         case CanIoProtocol::Haltech:
             ioExpanderHandler = &haltechIoTxHandler;
@@ -129,7 +130,7 @@ __attribute__((weak)) void SendCanData(uint32_t elapsedMs)
     #endif
 
     #if (MOTEC_E888_ENABLED > 0)
-        static uint32_t elapsedSinceMotecE888TxMs = 0;
+        static uint16_t elapsedSinceMotecE888TxMs = 0;
         if (IsMotecE888Enabled(configuration)) {
             DispatchProtocolHandler(motecE888TxHandler, elapsedMs, elapsedSinceMotecE888TxMs, configuration);
         }

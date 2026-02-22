@@ -208,7 +208,7 @@ void SendMotec888Format(Configuration* configuration)
     // TODO: Add more channels if needed
 }
 
-static bool IsMotecE888Enabled(const Configuration* cfg)
+bool IsMotecE888Enabled(const Configuration* cfg)
 {
 #if (EGT_CHANNELS > 0)
     if (cfg->egt[0].ExtraCanProtocol == CanEgtProtocol::Motec) {

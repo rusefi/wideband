@@ -21,8 +21,6 @@
 // Default period
 #define MS_IOBOX_PERIOD_MS         20
 
-static ProtocolHandler msIoBoxTxHandler = MakeProtocolHandler<&SendMsIoBoxFormat>(MS_IOBOX_PERIOD_MS);
-
 // MS IoBox protocol
 
 #define MS_IOBOX_BASE_ID         0x200
@@ -276,5 +274,7 @@ void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
         return;
     }
 }
+
+ProtocolHandler msIoBoxTxHandler = MakeProtocolHandler<&SendMsIoBoxFormat>(MS_IOBOX_PERIOD_MS);
 
 #endif

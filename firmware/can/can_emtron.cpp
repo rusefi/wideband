@@ -229,7 +229,7 @@ constexpr ProtocolHandler emtronEgtTxHandler = MakeProtocolHandler<&SendEmtronEg
 
 #endif
 
-#if (IO_EXPANDER_CHANNELS > 0)
+#if (IO_EXPANDER_ENABLED > 0)
 
 #define EMTRON_IO_TX_PERIOD_MS    100
 #define EMTRON_EIC16M_BASE_ID     0x2C1

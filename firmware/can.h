@@ -21,7 +21,7 @@ HeaterAllow GetHeaterAllowed();
 float GetRemoteBatteryVoltage();
 
 // Weak hooks - boards can override to customize protocol dispatch
-void SendCanData(uint32_t elapsedMs);
+void SendCanData(uint16_t elapsedMs);
 void ProcessCanMessage(const CANRxFrame* frame);
 
 // Helpers to support both bxCAN and CANFD peripherals
