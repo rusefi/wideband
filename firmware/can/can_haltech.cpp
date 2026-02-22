@@ -72,8 +72,12 @@ void SendHaltechAfrFormat(Configuration* configuration)
     if (configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech) {
         const auto& sampler0 = GetSampler(0);
         float lambda1 = GetLambda(0);
+
+        // TODO: Report free air as 0x7FFF, currently lambda is clamped to 2.0
         frame->Lambda1 = LambdaIsValid(0, lambda1) ? lambda1 * 1024 : 0;
-        frame->RSense1 = sampler0.GetSensorInternalResistance();
+
+        float ri = sampler0.GetSensorInternalResistance();
+        frame->RSense1 = ri > 255 ? 255 : (uint8_t)ri;
 
         frame->Sensor1Flags = haltech::SensorFlags::None;
 
@@ -86,7 +90,9 @@ void SendHaltechAfrFormat(Configuration* configuration)
         const auto& sampler2 = GetSampler(1);
         float lambda2 = GetLambda(1);
         frame->Lambda2 = LambdaIsValid(1, lambda2) ? lambda2 * 1024 : 0;
-        frame->RSense2 = sampler2.GetSensorInternalResistance();
+
+        float ri2 = sampler2.GetSensorInternalResistance();
+        frame->RSense2 = ri2 > 255 ? 255 : (uint8_t)ri2;
 
         frame->Sensor2Flags = haltech::SensorFlags::None;
         float vbatt2 = sampler2.GetInternalHeaterVoltage();
@@ -215,16 +221,9 @@ void SendHaltechIO12Message(Configuration* configuration)
 
     for (uint8_t i = 0; i < AUX_INPUT_CHANNELS && i < 4; i++)
     {
-        if (configuration->ioExpanderConfig.IOInputsEnabled & (1 << i))
-        {
-            float voltage = GetAuxInputVoltage(i);
-            uint16_t raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF; // Scale 0-5V to 0-4095
-            frame->AVI[i] = raw;
-        }
-        else
-        {
-            frame->AVI[i] = 0; // Input disabled, report as 0V
-        }
+        float voltage = GetAuxInputVoltage(i);
+        uint16_t raw = (uint16_t)(voltage * 4095.0f / 5.0f) & 0xFFF; // Scale 0-5V to 0-4095
+        frame->AVI[i] = raw;
     }
 
     // DPI messages would go here if we had digital pulse input hardware
@@ -294,13 +293,8 @@ void ProcessHaltechIO12Message(const CANRxFrame* frame, Configuration* configura
     }
 
     // Process both channels in this message
-    if (configuration->ioExpanderConfig.IOOutputsEnabled & (1 << baseChannel)) {
-        ProcessDpoChannel(&dpo->channels[0], baseChannel);
-    }
-    
-    if (configuration->ioExpanderConfig.IOOutputsEnabled & (1 << (baseChannel + 1))) {
-        ProcessDpoChannel(&dpo->channels[1], baseChannel + 1);
-    }
+    ProcessDpoChannel(&dpo->channels[0], baseChannel);
+    ProcessDpoChannel(&dpo->channels[1], baseChannel + 1);
 }
 
 constexpr ProtocolHandler haltechIoTxHandler = MakeProtocolHandler<&SendHaltechIO12Message>(HALTECH_IO_TX_PERIOD_MS);

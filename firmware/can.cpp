@@ -110,26 +110,27 @@ __attribute__((weak)) void SendCanData(uint16_t elapsedMs)
 
     static uint16_t elapsedSinceIoExpanderTxMs = 0;
     const ProtocolHandler* ioExpanderHandler = nullptr;
-
-    switch (configuration->ioExpanderConfig.Protocol) {
-        case CanIoProtocol::EcuMaster:
-            ioExpanderHandler = &ecuMasterSwitchBoardTxHandler;
-            break;
-        case CanIoProtocol::Haltech:
-            ioExpanderHandler = &haltechIoTxHandler;
-            break;
-        case CanIoProtocol::Emtron:
-            ioExpanderHandler = &emtronIoTxHandler;
-            break;
-        case CanIoProtocol::MsIoBox:
-            ioExpanderHandler = &msIoBoxTxHandler;
-            break;
-        default:
-            break;
-    }
-    if (ioExpanderHandler) {
-        DispatchProtocolHandler(*ioExpanderHandler, elapsedMs, elapsedSinceIoExpanderTxMs, configuration);
-     }
+    if (configuration->ioExpanderConfig.TxEnabled) {
+        switch (configuration->ioExpanderConfig.Protocol) {
+            case CanIoProtocol::EcuMaster:
+                ioExpanderHandler = &ecuMasterSwitchBoardTxHandler;
+                break;
+            case CanIoProtocol::Haltech:
+                ioExpanderHandler = &haltechIoTxHandler;
+                break;
+            case CanIoProtocol::Emtron:
+                ioExpanderHandler = &emtronIoTxHandler;
+                break;
+            case CanIoProtocol::MsIoBox:
+                ioExpanderHandler = &msIoBoxTxHandler;
+                break;
+            default:
+                break;
+        }
+        if (ioExpanderHandler) {
+            DispatchProtocolHandler(*ioExpanderHandler, elapsedMs, elapsedSinceIoExpanderTxMs, configuration);
+        }
+    } 
 
     #endif
 
@@ -149,16 +150,28 @@ __attribute__((weak)) void ProcessCanMessage(const CANRxFrame* frame)
     //ProcessLinkCanMessage(frame, configuration, &canStatusData);
 
     #if IO_EXPANDER_ENABLED > 0
-    switch (configuration->ioExpanderConfig.Protocol) {
-        case CanIoProtocol::Haltech:
-            ProcessHaltechIO12Message(frame, configuration);
-            return;
-        case CanIoProtocol::MsIoBox:
-            ProcessMsIoBoxCanMessage(frame, configuration);
-            return;
-        default:
-            break;
+    if (configuration->ioExpanderConfig.RxEnabled) {
+        switch (configuration->ioExpanderConfig.Protocol) {
+            case CanIoProtocol::Haltech:
+                ProcessHaltechIO12Message(frame, configuration);
+                break;
+            case CanIoProtocol::EcuMaster:
+                HandleEcuMasterCanMessage(frame, configuration);
+                break;
+            case CanIoProtocol::Motec:
+                // TODO: Implement Motec E888 RX message processing
+                break;
+            default:
+                break;
+        }
     }
+
+    // IOBox needs to config packages to know if it should send data
+    // We handle disabling output control in the handler instead of here
+    if (configuration->ioExpanderConfig.Protocol == CanIoProtocol::MsIoBox) {
+        ProcessMsIoBoxCanMessage(frame, configuration);
+    }
+
     #endif
 }
 

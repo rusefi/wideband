@@ -158,6 +158,8 @@ public:
         heaterConfig.PreheatTimeSec = HEATER_PREHEAT_TIME;
 
         ioExpanderConfig.Protocol = CanIoProtocol::None;
+        ioExpanderConfig.TxEnabled = false;
+        ioExpanderConfig.RxEnabled = false;
         ioExpanderConfig.Offset = 0;
         ioExpanderConfig.IOInputsEnabled = 0xFFFF;  // All inputs enabled by default
         ioExpanderConfig.IOOutputsEnabled = 0xFFFF; // All outputs enabled by default
@@ -205,7 +207,9 @@ public:
 
             struct {
                 CanIoProtocol Protocol: 5;
-                uint8_t Reserved0: 3;
+                uint8_t Reserved0: 1;
+                uint8_t TxEnabled: 1;
+                uint8_t RxEnabled: 1;
                 uint8_t Offset;
                 uint16_t IOInputsEnabled;  // Bitmask of which inputs should be reported in CAN messages
                 uint16_t IOOutputsEnabled; // Bitmask of which outputs should be controlled via CAN messages

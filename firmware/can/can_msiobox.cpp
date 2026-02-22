@@ -37,6 +37,11 @@
 #define MS_IOBOX_ADC14         0x09
 #define MS_IOBOX_ADC57         0x0A
 
+
+void SendMsIoBoxFormat(Configuration* configuration);
+
+ProtocolHandler msIoBoxTxHandler = MakeProtocolHandler<&SendMsIoBoxFormat>(MS_IOBOX_PERIOD_MS);
+
 namespace msiobox
 {
 
@@ -148,7 +153,7 @@ static uint16_t CanIoBoxGetAdc(size_t index)
         {
             const auto& sampler = GetSampler(index - 6);
             /* TODO: clamp */
-            return sampler.GetInternalHeaterVoltage() / 25.5 * 1024;
+            return sampler.GetInternalHeaterVoltage() / 5.0 * 1024;
         }
         default:
             return 0.0;
@@ -157,9 +162,6 @@ static uint16_t CanIoBoxGetAdc(size_t index)
 
 void SendMsIoBoxFormat(Configuration* configuration)
 {
-    // if (!configuration->ioExpanderConfig.enable_tx)
-    //    return;
-
     if (!configured)
         return;
 
@@ -170,7 +172,7 @@ void SendMsIoBoxFormat(Configuration* configuration)
         CanTxTyped<msiobox::adc14> frame1(base + MS_IOBOX_ADC14, false);
 
         for (size_t i = 0; i < 4; i++) {
-            frame1->adc[i] = CanIoBoxGetAdc(i);
+            frame1->adc[i] = CanIoBoxGetAdc(i+1);
         }
     }
 
@@ -179,20 +181,13 @@ void SendMsIoBoxFormat(Configuration* configuration)
         CanTxTyped<msiobox::adc57> frame2(base + MS_IOBOX_ADC57, false);
 
         for (size_t i = 0; i < 3; i++) {
-            frame2.get().adc[i] = CanIoBoxGetAdc(4 + i);
+            frame2.get().adc[i] = CanIoBoxGetAdc(5 + i);
         }
     }
 }
 
 void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
 {
-    if (!(cfg->ioExpanderConfig.Protocol == CanIoProtocol::MsIoBox)) {
-        return;
-    }
-    // For now only support standard IDs
-    if (fr->IDE != CAN_IDE_STD) {
-        return;
-    }
 
     const uint32_t base = MS_IOBOX_DEVICE_ID(cfg->ioExpanderConfig.Offset);
     uint32_t frame_id = CAN_ID(*fr);
@@ -218,7 +213,6 @@ void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
     {
         const msiobox::cfg *iobox_config = reinterpret_cast<const msiobox::cfg *>(fr->data8);
 
-        //can0       201   [8]  00 00 00 00 14 14 00 00
         pwm_mask = iobox_config->pwm_mask;
         tachin_mask = iobox_config->tachin_mask;
         tach_broadcast_interval = iobox_config->tach_broadcast_interval;
@@ -227,6 +221,11 @@ void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
 
         configured = true;
 
+        return;
+    }
+
+    // Do not act on other messages if Rx is disabled on this device
+    if (cfg->ioExpanderConfig.RxEnabled == false) {
         return;
     }
 
@@ -274,7 +273,5 @@ void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
         return;
     }
 }
-
-ProtocolHandler msIoBoxTxHandler = MakeProtocolHandler<&SendMsIoBoxFormat>(MS_IOBOX_PERIOD_MS);
 
 #endif

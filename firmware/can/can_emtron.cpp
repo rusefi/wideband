@@ -264,16 +264,9 @@ void SendEmtronIoFormat(Configuration* configuration)
 
     for (uint8_t i = 0; i < channels; i++)
     {
-        if (configuration->ioExpanderConfig.IOInputsEnabled & (1 << i))
-        {
-            float voltage = GetAuxInputVoltage(i);
-            uint16_t raw = (uint16_t)(voltage * 1000);
-            frame->Value[i] = raw;
-        }
-        else
-        {
-            frame->Value[i] = 0; // Input disabled, report as 0V
-        }
+        float voltage = GetAuxInputVoltage(i);
+        uint16_t raw = (uint16_t)(voltage * 1000);
+        frame->Value[i] = raw;
     }
 }
 

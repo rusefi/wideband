@@ -32,8 +32,7 @@ NS_ :
     SG_MUL_VAL_
 
 BS_: 
-BU_: ECUMaster_L2C ECUMaster_EGT ECU
-
+BU_: ECUMaster_L2C ECUMaster_EGT ECUMaster_Switchboard ECU 
 BO_ 1636 EcuMaster_AfrData1: 8 ECUMaster_L2C
    SG_ SystemVolts : 7|16@0+ (0.01,0) [0|655.35] "V" ECU
    SG_ HeaterPower : 23|8@0+ (0.392157,0) [0|100] "%" ECU
@@ -92,6 +91,38 @@ BO_ 1632 EcuMaster_Black_EGT: 8 ECUMaster_EGT
    SG_ Egt3 : 39|16@0- (1,0) [-32768|32767] "degC" ECU
    SG_ Egt4 : 55|16@0- (1,0) [-32768|32767] "degC" ECU
 
+BO_ 1600 EcuMaster_Switchboard_AV1_4: 8 ECUMaster_Switchboard
+   SG_ AV1 : 0|16@1+ (0.001,0) [0|65.535] "V" ECU
+   SG_ AV2 : 16|16@1+ (0.001,0) [0|65.535] "V" ECU
+   SG_ AV3 : 32|16@1+ (0.001,0) [0|65.535] "V" ECU
+   SG_ AV4 : 48|16@1+ (0.001,0) [0|65.535] "V" ECU
+
+BO_ 1601 EcuMaster_Switchboard_AV5_8: 8 ECUMaster_Switchboard
+   SG_ AV5 : 0|16@1+ (0.001,0) [0|65.535] "V" ECU
+   SG_ AV6 : 16|16@1+ (0.001,0) [0|65.535] "V" ECU
+   SG_ AV7 : 32|16@1+ (0.001,0) [0|65.535] "V" ECU
+   SG_ AV8 : 48|16@1+ (0.001,0) [0|65.535] "V" ECU
+
+BO_ 1602 EcuMaster_Switchboard_Other: 8 ECUMaster_Switchboard
+   SG_ Rotary1 : 0|4@1+ (1,0) [0|15] "" ECU
+   SG_ Rotary2 : 4|4@1+ (1,0) [0|15] "" ECU
+   SG_ Rotary3 : 8|4@1+ (1,0) [0|15] "" ECU
+   SG_ Rotary4 : 12|4@1+ (1,0) [0|15] "" ECU
+   SG_ Rotary5 : 16|4@1+ (1,0) [0|15] "" ECU
+   SG_ Rotary6 : 20|4@1+ (1,0) [0|15] "" ECU
+   SG_ Rotary7 : 24|4@1+ (1,0) [0|15] "" ECU
+   SG_ Rotary8 : 28|4@1+ (1,0) [0|15] "" ECU
+   SG_ Switch : 32|8@1+ (1,0) [0|255] "" ECU
+   SG_ AnalogState : 40|8@1+ (1,0) [0|255] "" ECU
+   SG_ LowSideState : 48|8@1+ (1,0) [0|255] "" ECU
+   SG_ Heartbeat : 56|8@1+ (1,0) [0|255] "" ECU
+
+BO_ 1603 EcuMaster_Switchboard_LowSide_Rx: 8 ECU
+   SG_ LowSide1_State : 0|8@1+ (1,0) [0|255] "" ECUMaster_Switchboard
+   SG_ LowSide2_State : 8|8@1+ (1,0) [0|255] "" ECUMaster_Switchboard
+   SG_ LowSide3_State : 16|8@1+ (1,0) [0|255] "" ECUMaster_Switchboard
+   SG_ LowSide4_State : 24|8@1+ (1,0) [0|255] "" ECUMaster_Switchboard
+
 CM_ BO_ 1636 "EcuMaster AFR Data 1. Base ID 0x664 (1636), 1 Mbps, 10 ms period";
 CM_ SG_ 1636 HeaterPower "0-100%, scaling: 100/255";
 CM_ SG_ 1636 SensorTemp "Sensor temperature in degC, scaling: 4:1";
@@ -112,6 +143,34 @@ CM_ SG_ 1639 OxygenConcentration "Oxygen concentration in %";
 CM_ SG_ 1639 Ri "Sensor internal resistance in Ohms";
 CM_ BO_ 1552 "EcuMaster Classic EGT. Base ID 0x610 (1552), supports up to 4 EGT channels";
 CM_ BO_ 1632 "EcuMaster Black EGT. Base ID 0x660 (1632), supports up to 4 EGT channels";
+CM_ BO_ 1600 "EcuMaster Switchboard Analog Voltages 1-4. Base ID 0x640 (1600), 100 ms period";
+CM_ SG_ 1600 AV1 "Analog Voltage input 1";
+CM_ SG_ 1600 AV2 "Analog Voltage input 2";
+CM_ SG_ 1600 AV3 "Analog Voltage input 3";
+CM_ SG_ 1600 AV4 "Analog Voltage input 4";
+CM_ BO_ 1601 "EcuMaster Switchboard Analog Voltages 5-8. Base ID + 1 = 0x641 (1601)";
+CM_ SG_ 1601 AV5 "Analog Voltage input 5";
+CM_ SG_ 1601 AV6 "Analog Voltage input 6";
+CM_ SG_ 1601 AV7 "Analog Voltage input 7";
+CM_ SG_ 1601 AV8 "Analog Voltage input 8";
+CM_ BO_ 1602 "EcuMaster Switchboard Other Data. Base ID + 2 = 0x642 (1602)";
+CM_ SG_ 1602 Rotary1 "Rotary switch 1 position (0-15)";
+CM_ SG_ 1602 Rotary2 "Rotary switch 2 position (0-15)";
+CM_ SG_ 1602 Rotary3 "Rotary switch 3 position (0-15)";
+CM_ SG_ 1602 Rotary4 "Rotary switch 4 position (0-15)";
+CM_ SG_ 1602 Rotary5 "Rotary switch 5 position (0-15)";
+CM_ SG_ 1602 Rotary6 "Rotary switch 6 position (0-15)";
+CM_ SG_ 1602 Rotary7 "Rotary switch 7 position (0-15)";
+CM_ SG_ 1602 Rotary8 "Rotary switch 8 position (0-15)";
+CM_ SG_ 1602 Switch "Switch state bitmask: bits 0-7 represent switches 1-8 (0=open, 1=closed)";
+CM_ SG_ 1602 AnalogState "Analog input threshold state bitmask (1=above threshold, 0=below threshold)";
+CM_ SG_ 1602 LowSideState "Low-side output state bitmask (1=active, 0=inactive)";
+CM_ SG_ 1602 Heartbeat "Heartbeat counter, incremented on each message";
+CM_ BO_ 1603 "EcuMaster Switchboard Low-Side Control. Base ID + 3 = 0x643 (1603), ECU to Switchboard";
+CM_ SG_ 1603 LowSide1_State "Low-side output 1 control (0=inactive, non-zero=active)";
+CM_ SG_ 1603 LowSide2_State "Low-side output 2 control (0=inactive, non-zero=active)";
+CM_ SG_ 1603 LowSide3_State "Low-side output 3 control (0=inactive, non-zero=active)";
+CM_ SG_ 1603 LowSide4_State "Low-side output 4 control (0=inactive, non-zero=active)";
 BA_DEF_ "BusType" STRING ;
 BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
 BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;

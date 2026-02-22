@@ -1,0 +1,107 @@
+VERSION ""
+
+
+NS_ :
+    NS_DESC_
+    CM_
+    BA_DEF_
+    BA_
+    VAL_
+    CAT_DEF_
+    CAT_
+    FILTER
+    BA_DEF_DEF_
+    EV_DATA_
+    ENVVAR_DATA_
+    SGTYPE_
+    SGTYPE_VAL_
+    BA_DEF_SGTYPE_
+    BA_SGTYPE_
+    SIG_TYPE_REF_
+    VAL_TABLE_
+    SIG_GROUP_
+    SIG_VALTYPE_
+    SIGTYPE_VALTYPE_
+    BO_TX_BU_
+    BA_DEF_REL_
+    BA_REL_
+    BA_DEF_DEF_REL_
+    BU_SG_REL_
+    BU_EV_REL_
+    BU_BO_REL_
+    SG_MUL_VAL_
+
+BS_: 
+BU_: MS_IOBOX ECU 
+BO_ 512 MS_IOBOX_PING: 0 ECU
+
+BO_ 513 MS_IOBOX_CONFIG: 8 ECU
+   SG_ pwm_mask : 0|8@1+ (1,0) [0|255] "" MS_IOBOX
+   SG_ tachin_mask : 16|8@1+ (1,0) [0|255] "" MS_IOBOX
+   SG_ adc_broadcast_interval : 32|8@1+ (1,0) [0|255] "ms" MS_IOBOX
+   SG_ tach_broadcast_interval : 40|8@1+ (1,0) [0|255] "ms" MS_IOBOX
+
+BO_ 514 MS_IOBOX_SET_PWM0: 8 ECU
+   SG_ ch0_on : 7|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch0_off : 23|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch1_on : 39|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch1_off : 55|16@0+ (1,0) [0|65535] "" MS_IOBOX
+
+BO_ 515 MS_IOBOX_SET_PWM1: 8 ECU
+   SG_ ch2_on : 7|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch2_off : 23|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch3_on : 39|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch3_off : 55|16@0+ (1,0) [0|65535] "" MS_IOBOX
+
+BO_ 516 MS_IOBOX_SET_PWM2: 8 ECU
+   SG_ ch4_on : 7|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch4_off : 23|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch5_on : 39|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch5_off : 55|16@0+ (1,0) [0|65535] "" MS_IOBOX
+
+BO_ 517 MS_IOBOX_SET_PWM3: 5 ECU
+   SG_ ch6_on : 7|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ ch6_off : 23|16@0+ (1,0) [0|65535] "" MS_IOBOX
+   SG_ out_state : 32|8@1+ (1,0) [0|255] "" MS_IOBOX
+
+BO_ 520 MS_IOBOX_WHOAMI: 8 MS_IOBOX
+   SG_ version : 0|8@1+ (1,0) [0|255] "" ECU
+   SG_ pwm_period : 32|16@0+ (0.01,0) [0|655.35] "us" ECU
+   SG_ tachin_period : 48|16@0+ (0.01,0) [0|655.35] "us" ECU
+
+BO_ 521 MS_IOBOX_ADC14: 8 MS_IOBOX
+   SG_ adc1 : 7|16@0+ (0.00488281,0) [0|5] "V" Vector__XXX
+   SG_ adc2 : 23|16@0+ (0.00488281,0) [0|5] "V" ECU
+   SG_ adc3 : 39|16@0+ (0.00488281,0) [0|5] "V" ECU
+   SG_ adc4 : 55|16@0+ (0.00488281,0) [0|5] "V" ECU
+
+BO_ 522 MS_IOBOX_ADC57: 8 MS_IOBOX
+   SG_ inputs : 0|8@1+ (1,0) [0|255] "" ECU
+   SG_ adc5 : 23|16@0+ (0.00488281,0) [0|5] "V" ECU
+   SG_ adc6 : 39|16@0+ (0.00488281,0) [0|5] "V" ECU
+   SG_ adc7 : 55|16@0+ (0.00488281,0) [0|5] "V" ECU
+
+CM_ BO_ 512 "Ping request with zero payload";
+CM_ BO_ 513 "Configuration message for PWM, tach-in masks and broadcast intervals";
+CM_ SG_ 513 pwm_mask "PWM mask: 0=On/Off, 1=PWM";
+CM_ SG_ 513 tachin_mask "Tach input mask";
+CM_ BO_ 514 "PWM settings for channels 0-1 (mapped to analog outputs)";
+CM_ BO_ 515 "PWM settings for channels 2-3";
+CM_ BO_ 516 "PWM settings for channels 4-5";
+CM_ BO_ 517 "PWM settings for channel 6 and output state";
+CM_ BO_ 520 "Device identity and timing information response";
+CM_ BO_ 521 "ADC readings for inputs 1-4";
+CM_ SG_ 521 adc1 "AUX Left input";
+CM_ SG_ 521 adc2 "AUX Right input";
+CM_ SG_ 521 adc3 "AUX out left voltage";
+CM_ SG_ 521 adc4 "AUX out right voltage";
+CM_ BO_ 522 "ADC readings for inputs 5-7";
+CM_ SG_ 522 adc5 "WBO supply voltage";
+CM_ SG_ 522 adc6 "Left sensor heater supply";
+CM_ SG_ 522 adc7 "Right sensor heater supply";
+BA_DEF_ BO_ "GenMsgBackgroundColor" STRING ;
+BA_DEF_ BO_ "GenMsgForegroundColor" STRING ;
+BA_DEF_ BO_ "labelfilters" INT 0 0;
+BA_DEF_DEF_ "GenMsgBackgroundColor" "#ffffff";
+BA_DEF_DEF_ "GenMsgForegroundColor" "#000000";
+BA_DEF_DEF_ "labelfilters" 1;

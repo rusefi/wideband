@@ -218,21 +218,14 @@ void SendEcuMasterSwitchBoardFormat(Configuration* configuration)
     CanTxTyped<ecumaster::AVData> frame(id, true);
     for (uint8_t i = 0; i < channels; i++)
     {
-        if (configuration->ioExpanderConfig.IOInputsEnabled & (1 << i))
-        {
-            float voltage = GetAuxInputVoltage(i);
+        float voltage = GetAuxInputVoltage(i);
 
-            // Some hysteresis
-            if (voltage > 3.0f) analogStatus |= (1 << i);
-            if (voltage < 2.0f) analogStatus &= ~(1 << i);
+        // Some hysteresis
+        if (voltage > 3.0f) analogStatus |= (1 << i);
+        if (voltage < 2.0f) analogStatus &= ~(1 << i);
 
-            uint16_t raw = (uint16_t)(voltage * 1000);
-            frame->Value[i] = raw;
-        }
-        else
-        {
-            frame->Value[i] = 0; // Input disabled, report as 0V
-        }
+        uint16_t raw = (uint16_t)(voltage * 1000);
+        frame->Value[i] = raw;
     }
 
     CanTxTyped<ecumaster::OtherData> otherFrame(id + 2, true);
@@ -244,31 +237,25 @@ void SendEcuMasterSwitchBoardFormat(Configuration* configuration)
 
 void HandleEcuMasterCanMessage(const CANRxFrame* msg, Configuration* configuration)
 {
-    auto msg_id = CAN_ID(*msg);
+    uint32_t msg_id = CAN_ID(*msg);
+    uint32_t device_id = ECUMASTER_SWITCHBOARD_DEVICE_ID(configuration->ioExpanderConfig.Offset);
 
-    auto device_id = ECUMASTER_SWITCHBOARD_DEVICE_ID(configuration->ioExpanderConfig.Offset);
-
-    if (msg_id != device_id + ECUMASTER_SWITCHBOARD_RX_OFFSET) {
+    if (msg_id != (device_id + ECUMASTER_SWITCHBOARD_RX_OFFSET)) {
         return; // Not a low-side control message
     }
 
     auto lowSideData = reinterpret_cast<const ecumaster::LowSideRxData*>(msg->data8);
-    for (uint8_t i = 0; i < 4; i++)
+    for (uint8_t i = 0; i < PWM_OUTPUT_CHANNELS; i++)
     {
-        if (configuration->ioExpanderConfig.IOOutputsEnabled & (1 << i))
+        if (lowSideData->State[i])
         {
-            if (lowSideData->State[i])
-            {
-                lowSideStatus |= (1 << i);
-                SetAuxPwmDuty(i, 1.0); // Set PWM duty to 100% for active low-side output
-            }
-            else
-            {
-                lowSideStatus &= ~(1 << i);
-                SetAuxPwmDuty(i, 0.0); // Set PWM duty to 0% for inactive low-side output
-            }
-
-
+            lowSideStatus |= (1 << i);
+            SetAuxPwmDuty(i, 1.0); // Set PWM duty to 100% for active low-side output
+        }
+        else
+        {
+            lowSideStatus &= ~(1 << i);
+            SetAuxPwmDuty(i, 0.0); // Set PWM duty to 0% for inactive low-side output
         }
     }
 }

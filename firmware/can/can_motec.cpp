@@ -131,6 +131,7 @@ constexpr ProtocolHandler motecAfrTxHandler = MakeProtocolHandler<&SendMotecAfrF
 #define MOTEC_E888_PERIOD_MS       50
 // BASE ID: 0x0F0; 0x0F4; 0x0F8; 0x0FC
 #define MOTEC_E888_BASE_ID         0x0F0
+#define MOTEC_E888_DEVICE_ID(n)    (MOTEC_E888_BASE_ID + 4*(n))
 
 namespace motec
 {
@@ -162,7 +163,6 @@ static_assert(sizeof(E888Data1) == 8);
 
 void SendMotec888Format(Configuration* configuration)
 {
-    auto id = MOTEC_E888_BASE_ID;
     auto offset = 0;
 
     #if (EGT_CHANNELS > 0)
@@ -177,15 +177,15 @@ void SendMotec888Format(Configuration* configuration)
         }
     #endif
 
-    id += offset;
+    uint32_t id = MOTEC_E888_DEVICE_ID(offset);
 
     CanTxTyped<motec::E888Data1> frame(id, true);
 
     #if AUX_INPUT_CHANNELS > 0
-
-    frame->data.Value1 = GetAuxInputVoltage(0) * 1000;
-    frame->data.Value2 = GetAuxInputVoltage(1) * 1000;
-
+    if (configuration->ioExpanderConfig.TxEnabled) {
+        frame->data.Value1 = GetAuxInputVoltage(0) * 1000;
+        frame->data.Value2 = GetAuxInputVoltage(1) * 1000;
+    }
     #endif
 
     #if (EGT_CHANNELS > 0)
