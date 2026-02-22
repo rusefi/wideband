@@ -12,5 +12,7 @@
     #define MOTEC_E888_ENABLED 1
 #endif
 
-extern AfrHandler motecAfrTxHandler;
-extern CallbackHandler motecE888TxHandler;
+bool IsMotecE888Enabled(const Configuration* cfg);
+
+extern const ProtocolHandler motecAfrTxHandler;
+extern const ProtocolHandler motecE888TxHandler;

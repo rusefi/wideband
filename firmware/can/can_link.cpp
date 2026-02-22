@@ -69,29 +69,6 @@ static_assert(sizeof(AfrData2) == 8);
 
 } //namespace linkecu
 
-
-static void SendAck(uint16_t id, uint8_t id_ok, uint8_t bus_freq_ok)
-{
-    CANTxFrame frame;
-
-#ifdef STM32G4XX
-    frame.common.RTR = 0;
-#else // Not CAN FD
-    frame.RTR = CAN_RTR_DATA;
-#endif
-
-    frame.DLC = 8;
-
-    CAN_EXT(frame) = 1;
-    CAN_EID(frame) = LINKECU_L2C_BASE_ID + id;
-
-    frame.data8[0] = 24;
-    frame.data8[1] = id_ok ? 0x01 : 0xFF;
-    frame.data8[2] = bus_freq_ok ? 0x01 : 0xFF;
-
-    canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &frame, TIME_INFINITE);
-}
-
 void SendLinkAfrFormat(Configuration* configuration, uint8_t ch)
 {
     auto id = LINKECU_L2C_BASE_ID + configuration->afr[ch].ExtraCanIdOffset;
@@ -127,8 +104,11 @@ void SendLinkAfrFormat(Configuration* configuration, uint8_t ch)
     frame2->HeaterVoltage = heater.GetHeaterEffectiveVoltage() * 100;
 }
 
+constexpr ProtocolHandler linkAfrTxHandler = MakeProtocolHandler<&SendLinkAfrFormat>(LINKECU_L2C_TX_PERIOD_MS);
+
 #if (EGT_CHANNELS > 0)
 
+#define LINKECU_TCCXX_TX_PERIOD_MS    50
 #define LINKECU_TCCXX_BASE_ID         0x705
 #define LINKECU_TCCXX_DATA_3_ID       0x707
 #define LINKECU_TCCXX_STATUS_ID       0x708
@@ -209,7 +189,31 @@ void SendLinkEgtFormat(Configuration* configuration)
     // TODO: set actual status
 }
 
+constexpr ProtocolHandler linkEgtTxHandler = MakeProtocolHandler<&SendLinkEgtFormat>(LINKECU_TCCXX_TX_PERIOD_MS);
+
 #endif
+
+static void SendAck(uint16_t id, uint8_t id_ok, uint8_t bus_freq_ok)
+{
+    CANTxFrame frame;
+
+#ifdef STM32G4XX
+    frame.common.RTR = 0;
+#else // Not CAN FD
+    frame.RTR = CAN_RTR_DATA;
+#endif
+
+    frame.DLC = 8;
+
+    CAN_EXT(frame) = 1;
+    CAN_EID(frame) = LINKECU_L2C_BASE_ID + id;
+
+    frame.data8[0] = 24;
+    frame.data8[1] = id_ok ? 0x01 : 0xFF;
+    frame.data8[2] = bus_freq_ok ? 0x01 : 0xFF;
+
+    canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &frame, TIME_INFINITE);
+}
 
 void ProcessLinkCanMessage(const CANRxFrame* frame, Configuration* configuration, struct CanStatusData* statusData)
 {
@@ -267,6 +271,3 @@ void ProcessLinkCanMessage(const CANRxFrame* frame, Configuration* configuration
         }
     }
 }
-
-AfrHandler linkAfrTxHandler(CanAfrProtocol::LinkEcu, 10, SendLinkAfrFormat);
-EgtHandler linkEgtTxHandler(CanEgtProtocol::LinkEcu, 50, SendLinkEgtFormat);

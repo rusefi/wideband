@@ -7,6 +7,6 @@
 #include "base_protocol_handler.h"
 #include "port.h"
 
-extern AfrHandler aemNetAfrTxHandler;
-extern EgtHandler aemNet0305EgtTxHandler;
-extern EgtHandler aemNet2224EgtTxHandler;
+extern const ProtocolHandler aemNetAfrTxHandler;
+extern const ProtocolHandler aemNet0305EgtTxHandler;
+extern const ProtocolHandler aemNet2224EgtTxHandler;

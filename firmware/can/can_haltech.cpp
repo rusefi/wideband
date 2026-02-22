@@ -19,6 +19,7 @@
 // Haltech protocol
 // 1Mbps, big endian, DLC 8
 
+#define HALTECH_WB2_TX_PERIOD_MS    10
 #define HALTECH_WB2_BASE_ID         0x2B0
 
 namespace haltech
@@ -101,8 +102,12 @@ void SendHaltechAfrFormat(Configuration* configuration)
     frame->VBatt = vbatt * 255.0 / 20.0f;
 }
 
+constexpr ProtocolHandler haltechAfrTxHandler = MakeProtocolHandler<&SendHaltechAfrFormat>(HALTECH_WB2_TX_PERIOD_MS);
+
+
 #if (EGT_CHANNELS > 0)
 
+#define HALTECH_TCA_TX_PERIOD_MS    50
 #define HALTECH_TCA_BASE_ID         0x2CC
 
 namespace haltech
@@ -136,13 +141,15 @@ void SendHaltechEgtFormat(Configuration* configuration)
     }
 }
 
+constexpr ProtocolHandler haltechEgtTxHandler = MakeProtocolHandler<&SendHaltechEgtFormat>(HALTECH_TCA_TX_PERIOD_MS);
+
 #endif
 
 
 #if ((AUX_INPUT_CHANNELS > 0) || (PWM_OUTPUT_CHANNELS > 0))
 
 // IO_Expander protocol
-// 50 Hz, big endian, DLC 8
+#define HALTECH_IO_TX_PERIOD_MS    100
 #define HALTECH_IOEXPANDER_BASE_ID 0x2C0
 
 namespace haltech
@@ -297,29 +304,6 @@ void ProcessHaltechIO12Message(const CANRxFrame* frame, Configuration* configura
     }
 }
 
-#else
-
-void SendHaltechIO12Message(Configuration* configuration)
-{
-    (void) configuration;
-    // No aux inputs, so nothing to send
-}
-
-void ProcessHaltechIO12Message(const CANRxFrame* frame, Configuration* configuration)
-{
-    (void) frame;
-    (void) configuration;
-    // No aux inputs, so nothing to process
-}
+constexpr ProtocolHandler haltechIoTxHandler = MakeProtocolHandler<&SendHaltechIO12Message>(HALTECH_IO_TX_PERIOD_MS);
 
 #endif
-
-
-static bool IsHaltechAfrEnabled(const Configuration* cfg)
-{
-    return cfg->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech;
-}
-
-CallbackHandler haltechAfrTxHandler(10, IsHaltechAfrEnabled, SendHaltechAfrFormat);
-EgtHandler haltechEgtTxHandler(CanEgtProtocol::Haltech, 50, SendHaltechEgtFormat);
-IoHandler haltechIoTxHandler(CanIoProtocol::Haltech, 100, SendHaltechIO12Message);

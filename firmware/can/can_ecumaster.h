@@ -8,6 +8,6 @@
 #include "port.h"
 
 
-extern AfrHandler ecuMasterAfrTxHandler;
-extern EgtHandler ecuMasterClassicEgtTxHandler;
-extern EgtHandler ecuMasterBlackEgtTxHandler;
+extern const ProtocolHandler ecuMasterAfrTxHandler;
+extern const ProtocolHandler ecuMasterClassicEgtTxHandler;
+extern const ProtocolHandler ecuMasterBlackEgtTxHandler;

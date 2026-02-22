@@ -9,7 +9,7 @@
 
 void ProcessHaltechIO12Message(const CANRxFrame* frame, Configuration* configuration);
 
-extern CallbackHandler haltechAfrTxHandler;
-extern EgtHandler haltechEgtTxHandler;
-extern IoHandler haltechIoTxHandler;
+extern const ProtocolHandler haltechAfrTxHandler;
+extern const ProtocolHandler haltechEgtTxHandler;
+extern const ProtocolHandler haltechIoTxHandler;
 

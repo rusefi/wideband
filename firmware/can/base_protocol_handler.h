@@ -5,164 +5,78 @@
 
 #include "port.h"
 
-class BaseProtocolHandler {
-public:
-    explicit BaseProtocolHandler(uint16_t intervalMs)
-        : m_intervalMs(intervalMs)
-    {
-    }
 
-    virtual uint16_t interval_ms() const
-    {
-        return m_intervalMs;
-    }
+using SendMessageCallback = void (*)(Configuration*, uint8_t);
+constexpr uint8_t kUnusedChannel = 0xFF;
 
-    virtual bool is_enabled(const Configuration*) const
-    {
-        return true;
-    }
-
-    virtual void send_message(Configuration*)
-    {
-    }
-
-    virtual void dispatch(uint32_t elapsedMs, Configuration* configuration)
-    {
-        if (!is_enabled(configuration)) {
-            return;
-        }
-
-        auto interval = interval_ms();
-        m_elapsedSinceDispatchMs += elapsedMs;
-        if (m_elapsedSinceDispatchMs < interval) {
-            return;
-        }
-
-        m_elapsedSinceDispatchMs -= interval;
-
-        send_message(configuration);
-    }
-
-    uint16_t m_intervalMs;
-
-private:
-    uint32_t m_elapsedSinceDispatchMs = 0;
+struct ProtocolHandler final {
+    uint16_t interval_ms;
+    SendMessageCallback send_message;
 };
 
-class AfrHandler : public BaseProtocolHandler {
-public:
-    using SendAfrCallback = void (*)(Configuration*, uint8_t);
+/*
+Reference usage:
 
-    AfrHandler(CanAfrProtocol protocol, uint16_t intervalMs, SendAfrCallback send)
-        : BaseProtocolHandler(intervalMs)
-        , m_protocol(protocol)
-        , m_send(send)
-    {
+// Protocol source file example (e.g. can_haltech.cpp):
+// -----------------------------------------------------
+// static void SendHaltechAfr(Configuration* cfg)
+// {
+//     // ...
+// }
+//
+// // Actual descriptor stays file-local constexpr in flash.
+// constexpr ProtocolHandler kHaltechAfrTxHandler = MakeProtocolHandler<&SendHaltechAfr>(50);
+//
+// Protocol header (e.g. can_haltech.h):
+// -------------------------------------
+// extern const ProtocolHandler& haltechAfrTxHandler;
+*/
+
+template<void (*Send)(Configuration*)>
+inline void SendMessageAdapter(Configuration* configuration, uint8_t)
+{
+    Send(configuration);
+}
+
+template<void (*Send)(Configuration*, uint8_t)>
+inline void SendMessageChannelAdapter(Configuration* configuration, uint8_t channel)
+{
+    Send(configuration, channel);
+}
+
+template<void (*Send)(Configuration*)>
+constexpr ProtocolHandler MakeProtocolHandler(uint16_t intervalMs)
+{
+    return { intervalMs, &SendMessageAdapter<Send> };
+}
+
+template<void (*Send)(Configuration*, uint8_t)>
+constexpr ProtocolHandler MakeProtocolHandler(uint16_t intervalMs)
+{
+    return { intervalMs, &SendMessageChannelAdapter<Send> };
+}
+
+inline void DispatchProtocolHandler(
+    const ProtocolHandler& handler,
+    uint32_t elapsedMs,
+    uint32_t& elapsedSinceDispatchMs,
+    Configuration* configuration,
+    uint8_t channel)
+{
+    elapsedSinceDispatchMs += elapsedMs;
+    if (elapsedSinceDispatchMs < handler.interval_ms) {
+        return;
     }
 
-    void send_message(Configuration* configuration) override
-    {
-        for (uint8_t ch = 0; ch < AFR_CHANNELS; ch++) {
-            if (configuration->afr[ch].ExtraCanProtocol != m_protocol) {
-                continue;
-            }
+    elapsedSinceDispatchMs -= handler.interval_ms;
+    handler.send_message(configuration, channel);
+}
 
-            m_send(configuration, ch);
-        }
-    }
-
-private:
-    const CanAfrProtocol m_protocol;
-    SendAfrCallback m_send;
-};
-
-class EgtHandler : public BaseProtocolHandler {
-public:
-    using SendEgtCallback = void (*)(Configuration*);
-
-    EgtHandler(CanEgtProtocol protocol, uint16_t intervalMs, SendEgtCallback send)
-        : BaseProtocolHandler(intervalMs)
-        , m_protocol(protocol)
-        , m_send(send)
-    {
-    }
-
-    bool is_enabled(const Configuration* configuration) const override
-    {
-#if (EGT_CHANNELS > 0)
-        // Base egt handler just check first channel is enabled for this protocol
-        return configuration->egt[0].ExtraCanProtocol == m_protocol;
-#else
-        (void)configuration;
-#endif
-
-        return false;
-    }
-
-    void send_message(Configuration* configuration) override
-    {
-        m_send(configuration);
-    }
-
-private:
-    const CanEgtProtocol m_protocol;
-    SendEgtCallback m_send;
-};
-
-class IoHandler final : public BaseProtocolHandler {
-public:
-    using SendIoCallback = void (*)(Configuration*);
-
-    IoHandler(CanIoProtocol protocol, uint16_t intervalMs, SendIoCallback send)
-        : BaseProtocolHandler(intervalMs)
-        , m_protocol(protocol)
-        , m_send(send)
-    {
-    }
-
-    bool is_enabled(const Configuration* configuration) const override
-    {
-        #if (IO_EXPANDER_ENABLED > 0)
-        return configuration->ioExpanderConfig.Protocol == m_protocol;
-        #else
-        (void)configuration;
-        return false;
-        #endif
-    }
-
-    void send_message(Configuration* configuration) override
-    {
-        m_send(configuration);
-    }
-
-private:
-    const CanIoProtocol m_protocol;
-    SendIoCallback m_send;
-};
-
-class CallbackHandler final : public BaseProtocolHandler {
-public:
-    using IsEnabledCallback = bool (*)(const Configuration*);
-    using SendCallback = void (*)(Configuration*);
-
-    CallbackHandler(uint16_t intervalMs, IsEnabledCallback isEnabled, SendCallback send)
-        : BaseProtocolHandler(intervalMs)
-        , m_isEnabled(isEnabled)
-        , m_send(send)
-    {
-    }
-
-    bool is_enabled(const Configuration* configuration) const override
-    {
-        return m_isEnabled(configuration);
-    }
-
-    void send_message(Configuration* configuration) override
-    {
-        m_send(configuration);
-    }
-
-private:
-    IsEnabledCallback m_isEnabled;
-    SendCallback m_send;
-};
+inline void DispatchProtocolHandler(
+    const ProtocolHandler& handler,
+    uint32_t elapsedMs,
+    uint32_t& elapsedSinceDispatchMs,
+    Configuration* configuration)
+{
+    DispatchProtocolHandler(handler, elapsedMs, elapsedSinceDispatchMs, configuration, kUnusedChannel);
+}

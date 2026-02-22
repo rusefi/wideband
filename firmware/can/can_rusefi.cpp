@@ -151,17 +151,12 @@ void ProcessRusefiCanMessage(const CANRxFrame* frame, Configuration* configurati
     }
 }
 
-static bool rusefi_afr_enabled(const Configuration*)
-{
-    return true;
-}
-
 static void send_afr_messages(Configuration* configuration)
 {
-    for (uint8_t ch = 0; ch < AFR_CHANNELS; ch++)
+    for (size_t ch = 0; ch < AFR_CHANNELS; ch++)
     {
         SendRusefiFormat(configuration, ch);
     }
 }
 
-CallbackHandler rusefiAfrTxHandler(10, rusefi_afr_enabled, send_afr_messages);
+constexpr ProtocolHandler rusefiAfrTxHandler = MakeProtocolHandler<&send_afr_messages>(WBO_TX_PERIOD_MS);

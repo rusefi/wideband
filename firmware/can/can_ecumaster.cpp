@@ -108,7 +108,11 @@ void SendEcuMasterAfrFormat(Configuration* configuration, uint8_t ch)
     frame2->Ri = sampler.GetSensorInternalResistance() * 10;
 }
 
+constexpr ProtocolHandler ecuMasterAfrTxHandler = MakeProtocolHandler<&SendEcuMasterAfrFormat>(ECUMASTER_L2C_TX_PERIOD_MS);
+
 #if (EGT_CHANNELS > 0)
+
+#define ECU_MASTER_EGT_TX_PERIOD_MS    50
 
 namespace ecumaster
 {
@@ -146,8 +150,7 @@ void SendEcuMasterEgtFormat(Configuration* configuration)
     }
 }
 
-#endif
+constexpr ProtocolHandler ecuMasterClassicEgtTxHandler = MakeProtocolHandler<&SendEcuMasterEgtFormat>(ECU_MASTER_EGT_TX_PERIOD_MS);
+constexpr ProtocolHandler ecuMasterBlackEgtTxHandler = MakeProtocolHandler<&SendEcuMasterEgtFormat>(ECU_MASTER_EGT_TX_PERIOD_MS);
 
-AfrHandler ecuMasterAfrTxHandler(CanAfrProtocol::EcuMaster, 10, SendEcuMasterAfrFormat);
-EgtHandler ecuMasterClassicEgtTxHandler(CanEgtProtocol::EcuMasterClassic, 50, SendEcuMasterEgtFormat);
-EgtHandler ecuMasterBlackEgtTxHandler(CanEgtProtocol::EcuMasterBlack, 50, SendEcuMasterEgtFormat);
+#endif

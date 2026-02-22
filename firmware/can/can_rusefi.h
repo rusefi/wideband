@@ -8,4 +8,4 @@
 
 void ProcessRusefiCanMessage(const CANRxFrame* msg, Configuration* configuration, struct CanStatusData* statusData);
 
-extern CallbackHandler rusefiAfrTxHandler;
+extern const ProtocolHandler rusefiAfrTxHandler;

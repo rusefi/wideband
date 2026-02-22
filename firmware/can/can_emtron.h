@@ -7,6 +7,6 @@
 #include "base_protocol_handler.h"
 #include "port.h"
 
-extern AfrHandler emtronAfrTxHandler;
-extern EgtHandler emtronEgtTxHandler;
-extern IoHandler emtronIoTxHandler;
+extern const ProtocolHandler emtronAfrTxHandler;
+extern const ProtocolHandler emtronEgtTxHandler;
+extern const ProtocolHandler emtronIoTxHandler;

@@ -9,5 +9,5 @@
 
 void ProcessLinkCanMessage(const CANRxFrame* msg, Configuration* configuration, struct CanStatusData* statusData);
 
-extern AfrHandler linkAfrTxHandler;
-extern EgtHandler linkEgtTxHandler;
+extern const ProtocolHandler linkAfrTxHandler;
+extern const ProtocolHandler linkEgtTxHandler;

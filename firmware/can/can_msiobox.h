@@ -7,4 +7,4 @@
 #include "base_protocol_handler.h"
 
 void ProcessMsIoBoxCanMessage(const CANRxFrame* msg, Configuration* configuration);
-extern IoHandler msIoBoxTxHandler;
+extern const ProtocolHandler msIoBoxTxHandler;

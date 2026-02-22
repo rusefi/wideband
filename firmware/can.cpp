@@ -27,51 +27,133 @@ static struct CanStatusData canStatusData = {
     .remoteBatteryVoltage = 0.0f,
 };
 
-static BaseProtocolHandler* const TxHandlers[] = {
-    #if (AFR_CHANNELS > 0)
-    &rusefiAfrTxHandler,
-    &aemNetAfrTxHandler,
-    &ecuMasterAfrTxHandler,
-    &haltechAfrTxHandler,
-    &emtronAfrTxHandler,
-    &motecAfrTxHandler,
-    &linkAfrTxHandler,
-    #endif
-
-    #if (EGT_CHANNELS > 0)
-    &aemNet0305EgtTxHandler,
-    &aemNet2224EgtTxHandler,
-    &ecuMasterClassicEgtTxHandler,
-    &ecuMasterBlackEgtTxHandler,
-    &haltechEgtTxHandler,
-    &linkEgtTxHandler,
-    &emtronEgtTxHandler,
-    #endif
-
-    #if (IO_EXPANDER_ENABLED > 0)
-    &haltechIoTxHandler,
-    &emtronIoTxHandler,
-    &msIoBoxTxHandler,
-    #endif
-
-    #if (MOTEC_E888_ENABLED > 0)
-    &motecE888TxHandler,
-    #endif
-};
 
 __attribute__((weak)) void SendCanData(uint32_t elapsedMs)
 {
-    for (auto* handler : TxHandlers) {
-        handler->dispatch(elapsedMs, configuration);
+    #if (AFR_CHANNELS > 0)
+    static uint32_t elapsedSinceRusefiAfrTxMs[AFR_CHANNELS] = {0};
+    static uint32_t elapsedSinceExtraCanTxMs[AFR_CHANNELS] = {0};
+
+    for (size_t i = 0; i < AFR_CHANNELS; i++) {
+        DispatchProtocolHandler(rusefiAfrTxHandler, elapsedMs, elapsedSinceRusefiAfrTxMs[i], configuration, i);
+        const ProtocolHandler* extraHandler = nullptr;
+
+        switch (configuration->afr[i].ExtraCanProtocol) {
+            case CanAfrProtocol::AemNet:
+                extraHandler = &aemNetAfrTxHandler;
+                break;
+            case CanAfrProtocol::EcuMaster:
+                extraHandler = &ecuMasterAfrTxHandler;
+                break;
+            case CanAfrProtocol::Emtron:
+                extraHandler = &emtronAfrTxHandler;
+                break;
+            case CanAfrProtocol::Motec:
+                extraHandler = &motecAfrTxHandler;
+                break;
+            case CanAfrProtocol::LinkEcu:
+                extraHandler = &linkAfrTxHandler;
+                break;
+            default:
+                break;
+        }
+        if (extraHandler) {
+            DispatchProtocolHandler(*extraHandler, elapsedMs, elapsedSinceExtraCanTxMs[i], configuration, i);
+        }
     }
+
+    // Handle Haltech separately since it sends both AFR channels in the same message
+    if (configuration->afr[0].ExtraCanProtocol == CanAfrProtocol::Haltech
+        || configuration->afr[1].ExtraCanProtocol == CanAfrProtocol::Haltech) {
+        DispatchProtocolHandler(haltechAfrTxHandler, elapsedMs, elapsedSinceExtraCanTxMs[0], configuration);
+    }
+
+    #endif
+
+    #if (EGT_CHANNELS > 0)
+
+    static uint32_t elapsedSinceEgtTxMs = 0;
+    ProtocolHandler* egtHandler = nullptr;
+    switch (configuration->egt[0].ExtraCanProtocol) {
+        case CanEgtProtocol::AemNet0305:
+            egtHandler = &aemNet0305EgtTxHandler;
+            break;
+        case CanEgtProtocol::AemNet2224:
+            egtHandler = &aemNet2224EgtTxHandler;
+            break;
+        case CanEgtProtocol::EcuMasterClassic:
+            egtHandler = &ecuMasterClassicEgtTxHandler;
+            break;
+        case CanEgtProtocol::EcuMasterBlack:
+            egtHandler = &ecuMasterBlackEgtTxHandler;
+            break;
+        case CanEgtProtocol::Haltech:
+            egtHandler = &haltechEgtTxHandler;
+            break;
+        case CanEgtProtocol::LinkEcu:
+            egtHandler = &linkEgtTxHandler;
+            break;
+        case CanEgtProtocol::Emtron:
+            egtHandler = &emtronEgtTxHandler;
+            break;
+        default:
+            break;
+    }
+    if (egtHandler) {
+        DispatchProtocolHandler(*egtHandler, elapsedMs, elapsedSinceEgtTxMs, configuration);
+    }
+
+    #endif
+
+    #if (IO_EXPANDER_ENABLED > 0)
+
+    static uint32_t elapsedSinceIoExpanderTxMs = 0;
+    ProtocolHandler* ioExpanderHandler = nullptr;
+    switch (configuration->ioExpanderConfig.Protocol) {
+        case CanIoProtocol::Haltech:
+            ioExpanderHandler = &haltechIoTxHandler;
+            break;
+        case CanIoProtocol::Emtron:
+            ioExpanderHandler = &emtronIoTxHandler;
+            break;
+        case CanIoProtocol::MsIoBox:
+            ioExpanderHandler = &msIoBoxTxHandler;
+            break;
+        default:
+            break;
+    }
+    if (ioExpanderHandler) {
+        DispatchProtocolHandler(*ioExpanderHandler, elapsedMs, elapsedSinceIoExpanderTxMs, configuration);
+     }
+
+    #endif
+
+    #if (MOTEC_E888_ENABLED > 0)
+        static uint32_t elapsedSinceMotecE888TxMs = 0;
+        if (IsMotecE888Enabled(configuration)) {
+            DispatchProtocolHandler(motecE888TxHandler, elapsedMs, elapsedSinceMotecE888TxMs, configuration);
+        }
+    #endif
 }
 
 __attribute__((weak)) void ProcessCanMessage(const CANRxFrame* frame)
 {
     ProcessRusefiCanMessage(frame, configuration, &canStatusData);
-    ProcessLinkCanMessage(frame, configuration, &canStatusData);
-    ProcessHaltechIO12Message(frame, configuration);
-    ProcessMsIoBoxCanMessage(frame, configuration);
+
+    //ProcessLinkCanMessage(frame, configuration, &canStatusData);
+
+    #if IO_EXPANDER_ENABLED > 0
+    switch (configuration->ioExpanderConfig.Protocol) {
+        case CanIoProtocol::Haltech:
+            ProcessHaltechIO12Message(frame, configuration);
+            return;
+        case CanIoProtocol::MsIoBox:
+            ProcessMsIoBoxCanMessage(frame, configuration);
+            return;
+        default:
+            break;
+    }
+    #endif
 }
 
 static THD_WORKING_AREA(waCanTxThread, 512);

@@ -63,6 +63,9 @@ void SendAemNetUEGOFormat(Configuration* cfg, uint8_t ch)
     frame.get().Faults = 0; //TODO:
 }
 
+constexpr ProtocolHandler aemNetAfrTxHandler = MakeProtocolHandler<&SendAemNetUEGOFormat>(AEMNET_UEGO_TX_PERIOD_MS);
+
+
 #if (EGT_CHANNELS > 0)
 
 namespace aemnet
@@ -152,8 +155,7 @@ void SendAemNetEGT2224Format(Configuration* cfg)
     }
 }
 
-#endif /* EGT_CHANNELS > 0 */
+constexpr ProtocolHandler aemNet0305EgtTxHandler = MakeProtocolHandler<&SendAemNetEGT0305Format>(AEMNET_EGT_TX_PERIOD);
+constexpr ProtocolHandler aemNet2224EgtTxHandler = MakeProtocolHandler<&SendAemNetEGT2224Format>(AEMNET_EGT_TX_PERIOD);
 
-AfrHandler aemNetAfrTxHandler(CanAfrProtocol::AemNet, 10, SendAemNetUEGOFormat);
-EgtHandler aemNet0305EgtTxHandler(CanEgtProtocol::AemNet0305, 50, SendAemNetEGT0305Format);
-EgtHandler aemNet2224EgtTxHandler(CanEgtProtocol::AemNet2224, 50, SendAemNetEGT2224Format);
+#endif /* EGT_CHANNELS > 0 */

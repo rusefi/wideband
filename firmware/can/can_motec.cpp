@@ -17,6 +17,7 @@
 // MOTEC AFR protocol
 // ID: 0x460..0x47F; Offset 0-31
 // LTC can output data to any custom address
+#define MOTEC_LTC_PERIOD_MS       10
 #define MOTEC_LTC_BASE_ID         0x460
 
 namespace motec
@@ -123,8 +124,11 @@ void SendMotecAfrFormat(Configuration* configuration, uint8_t ch)
     frame2->Ri    = sampler.GetSensorInternalResistance();
 }
 
+constexpr ProtocolHandler motecAfrTxHandler = MakeProtocolHandler<&SendMotecAfrFormat>(MOTEC_LTC_PERIOD_MS);
+
 #if (EGT_CHANNELS > 0)
 
+#define MOTEC_E888_PERIOD_MS       50
 // BASE ID: 0x0F0; 0x0F4; 0x0F8; 0x0FC
 #define MOTEC_E888_BASE_ID         0x0F0
 
@@ -204,8 +208,6 @@ void SendMotec888Format(Configuration* configuration)
     // TODO: Add more channels if needed
 }
 
-#endif
-
 static bool IsMotecE888Enabled(const Configuration* cfg)
 {
 #if (EGT_CHANNELS > 0)
@@ -222,6 +224,7 @@ static bool IsMotecE888Enabled(const Configuration* cfg)
     return false;
 }
 
-AfrHandler motecAfrTxHandler(CanAfrProtocol::Motec, 10, SendMotecAfrFormat);
-CallbackHandler motecE888TxHandler(50, IsMotecE888Enabled, SendMotec888Format);
+constexpr ProtocolHandler motecE888TxHandler = MakeProtocolHandler<&SendMotec888Format>(MOTEC_E888_PERIOD_MS);
+
+#endif
 

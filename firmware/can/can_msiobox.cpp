@@ -16,9 +16,12 @@
 #include "auxout.h"
 #include "pwmout.h"
 
-void SendMsIoBoxFormat(Configuration* configuration);
+#if (IO_EXPANDER_ENABLED > 0)
 
-IoHandler msIoBoxTxHandler(CanIoProtocol::MsIoBox, 20, SendMsIoBoxFormat);
+// Default period
+#define MS_IOBOX_PERIOD_MS         20
+
+static ProtocolHandler msIoBoxTxHandler = MakeProtocolHandler<&SendMsIoBoxFormat>(MS_IOBOX_PERIOD_MS);
 
 // MS IoBox protocol
 
@@ -222,7 +225,7 @@ void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
         tachin_mask = iobox_config->tachin_mask;
         tach_broadcast_interval = iobox_config->tach_broadcast_interval;
 
-        msIoBoxTxHandler.m_intervalMs = iobox_config->adc_broadcast_interval;
+        msIoBoxTxHandler.interval_ms = iobox_config->adc_broadcast_interval;
 
         configured = true;
 
@@ -273,3 +276,5 @@ void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
         return;
     }
 }
+
+#endif

@@ -16,6 +16,7 @@
 
 // EMTRON AFR protocol
 
+#define EMTRON_LAMBDA_TX_PERIOD_MS    10
 #define EMTRON_ELC_BASE_ID         0x29F
 // BASE_ID = 671
 // ID = BASE_ID + Offset (0..11)
@@ -142,8 +143,11 @@ void SendEmtronAfrFormat(Configuration* configuration, uint8_t ch)
     frame->HeaterDuty = GetHeaterDuty(ch) * 100;
 }
 
+constexpr ProtocolHandler emtronAfrTxHandler = MakeProtocolHandler<&SendEmtronAfrFormat>(EMTRON_LAMBDA_TX_PERIOD_MS);
+
 #if (EGT_CHANNELS > 0)
 
+#define EMTRON_EGT_TX_PERIOD_MS    50
 #define EMTRON_ETC4_BASE_ID         0x2B3
 
 namespace emtron
@@ -221,10 +225,14 @@ void SendEmtronEgtFormat(Configuration* configuration)
     frame->ColdJunctionTemp = egtDrivers[0].coldJunctionTemperature;
 }
 
+constexpr ProtocolHandler emtronEgtTxHandler = MakeProtocolHandler<&SendEmtronEgtFormat>(EMTRON_EGT_TX_PERIOD_MS);   
+
 #endif
 
+#if (IO_EXPANDER_CHANNELS > 0)
 
-#define EMTRON_EIC16M_BASE_ID         0x2C1
+#define EMTRON_IO_TX_PERIOD_MS    100
+#define EMTRON_EIC16M_BASE_ID     0x2C1
 // Emtron does not have CAN-output devices, only input
 
 namespace emtron
@@ -251,6 +259,6 @@ void SendEmtronIoFormat(Configuration* configuration)
     // TODO: Implement sending inputs data
 }
 
-AfrHandler emtronAfrTxHandler(CanAfrProtocol::Emtron, 10, SendEmtronAfrFormat);
-EgtHandler emtronEgtTxHandler(CanEgtProtocol::Emtron, 50, SendEmtronEgtFormat);
-IoHandler emtronIoTxHandler(CanIoProtocol::Emtron, 100, SendEmtronIoFormat);
+constexpr ProtocolHandler emtronIoTxHandler = MakeProtocolHandler<&SendEmtronIoFormat>(EMTRON_IO_TX_PERIOD_MS);
+
+#endif
