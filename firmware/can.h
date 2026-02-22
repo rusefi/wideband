@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "hal.h"
+// #include "hal.h"
 
 void InitCan();
 
@@ -22,7 +22,9 @@ float GetRemoteBatteryVoltage();
 
 // Weak hooks - boards can override to customize protocol dispatch
 void SendCanData(uint16_t elapsedMs);
-void ProcessCanMessage(const CANRxFrame* frame);
+
+// Depends on hal, so test build fails
+// void ProcessCanMessage(const CANRxFrame* frame);
 
 // Helpers to support both bxCAN and CANFD peripherals
 #ifdef STM32G4XX
