@@ -13,7 +13,7 @@
 #include "heater_control.h"
 #include "lambda_conversion.h"
 #include "max3185x.h"
-#include "../for_rusefi/wideband_can.h"
+#include "pwmout.h"
 
 // EcuMaster protocol
 // CAN 1Mbps, big-endian
@@ -152,5 +152,127 @@ void SendEcuMasterEgtFormat(Configuration* configuration)
 
 constexpr ProtocolHandler ecuMasterClassicEgtTxHandler = MakeProtocolHandler<&SendEcuMasterEgtFormat>(ECU_MASTER_EGT_TX_PERIOD_MS);
 constexpr ProtocolHandler ecuMasterBlackEgtTxHandler = MakeProtocolHandler<&SendEcuMasterEgtFormat>(ECU_MASTER_EGT_TX_PERIOD_MS);
+
+#endif
+
+
+#if (IO_EXPANDER_ENABLED > 0)
+
+#define ECUMASTER_SWITCHBOARD_TX_PERIOD_MS    100
+#define ECUMASTER_SWITCHBOARD_BASE_ID         0x640
+#define ECUMASTER_SWITCHBOARD_DEVICE_ID(n)    (ECUMASTER_SWITCHBOARD_BASE_ID + (n) * 4)
+#define ECUMASTER_SWITCHBOARD_RX_OFFSET       3
+
+namespace ecumaster
+{
+    // BASE:     AV1-AV4, 0.001 V
+    // BASE + 1: AV5-AV8, 0.001 V
+    struct AVData
+    {
+        uint16_t Value[4]; 
+    } __attribute__((packed));
+
+    static_assert(sizeof(AVData) == 8);
+
+    // BASE + 2
+    struct OtherData
+    {
+        uint8_t Rotary1 : 4;  // 0-15
+        uint8_t Rotary2 : 4;  // 0-15
+        uint8_t Rotary3 : 4;  // 0-15
+        uint8_t Rotary4 : 4;  // 0-15
+        uint8_t Rotary5 : 4;  // 0-15
+        uint8_t Rotary6 : 4;  // 0-15
+        uint8_t Rotary7 : 4;  // 0-15
+        uint8_t Rotary8 : 4;  // 0-15
+        uint8_t Switch;       // bit 0-7 represent switch 1-8 (0=open, 1=closed)
+        uint8_t AnalogState;  // bitmask of which analog inputs are above threshold (1) or below threshold (0)
+        uint8_t LowSideState; // bitmask of which low-side outputs are active (1) or inactive (0)
+        uint8_t Heartbeat;    // Incremented on each message
+    } __attribute__((packed));
+
+    static_assert(sizeof(OtherData) == 8);
+
+    // BASE + 3: Low-side output control messages from ECU to switchboard
+    struct LowSideRxData
+    {
+        uint8_t State[4];
+        uint8_t Reserved[4];
+    } __attribute__((packed));
+
+    static_assert(sizeof(LowSideRxData) == 8);
+}
+
+static uint8_t hearbeat = 0;
+static uint8_t analogStatus = 0;
+static uint8_t lowSideStatus = 0;
+
+void SendEcuMasterSwitchBoardFormat(Configuration* configuration)
+{
+
+    auto id = ECUMASTER_SWITCHBOARD_BASE_ID + configuration->afr[0].ExtraCanIdOffset;
+    
+    // Handle first 4 channels for now
+    constexpr uint8_t channels = AUX_INPUT_CHANNELS > 4 ? 4 : AUX_INPUT_CHANNELS;
+
+    CanTxTyped<ecumaster::AVData> frame(id, true);
+    for (uint8_t i = 0; i < channels; i++)
+    {
+        if (configuration->ioExpanderConfig.IOInputsEnabled & (1 << i))
+        {
+            float voltage = GetAuxInputVoltage(i);
+
+            // Some hysteresis
+            if (voltage > 3.0f) analogStatus |= (1 << i);
+            if (voltage < 2.0f) analogStatus &= ~(1 << i);
+
+            uint16_t raw = (uint16_t)(voltage * 1000);
+            frame->Value[i] = raw;
+        }
+        else
+        {
+            frame->Value[i] = 0; // Input disabled, report as 0V
+        }
+    }
+
+    CanTxTyped<ecumaster::OtherData> otherFrame(id + 2, true);
+
+    otherFrame->AnalogState = analogStatus;
+    otherFrame->LowSideState = lowSideStatus;
+    otherFrame->Heartbeat = hearbeat++;
+}
+
+void HandleEcuMasterCanMessage(const CANRxFrame* msg, Configuration* configuration)
+{
+    auto msg_id = CAN_ID(*msg);
+
+    auto device_id = ECUMASTER_SWITCHBOARD_DEVICE_ID(configuration->ioExpanderConfig.Offset);
+
+    if (msg_id != device_id + ECUMASTER_SWITCHBOARD_RX_OFFSET) {
+        return; // Not a low-side control message
+    }
+
+    auto lowSideData = reinterpret_cast<const ecumaster::LowSideRxData*>(msg->data8);
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        if (configuration->ioExpanderConfig.IOOutputsEnabled & (1 << i))
+        {
+            if (lowSideData->State[i])
+            {
+                lowSideStatus |= (1 << i);
+                SetAuxPwmDuty(i, 1.0); // Set PWM duty to 100% for active low-side output
+            }
+            else
+            {
+                lowSideStatus &= ~(1 << i);
+                SetAuxPwmDuty(i, 0.0); // Set PWM duty to 0% for inactive low-side output
+            }
+
+
+        }
+    }
+}
+
+constexpr ProtocolHandler ecuMasterSwitchBoardTxHandler = MakeProtocolHandler<&SendEcuMasterSwitchBoardFormat>(ECUMASTER_SWITCHBOARD_TX_PERIOD_MS);
 
 #endif

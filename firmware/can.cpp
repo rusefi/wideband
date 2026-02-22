@@ -110,7 +110,11 @@ __attribute__((weak)) void SendCanData(uint16_t elapsedMs)
 
     static uint16_t elapsedSinceIoExpanderTxMs = 0;
     const ProtocolHandler* ioExpanderHandler = nullptr;
+
     switch (configuration->ioExpanderConfig.Protocol) {
+        case CanIoProtocol::EcuMaster:
+            ioExpanderHandler = &ecuMasterSwitchBoardTxHandler;
+            break;
         case CanIoProtocol::Haltech:
             ioExpanderHandler = &haltechIoTxHandler;
             break;
@@ -129,6 +133,7 @@ __attribute__((weak)) void SendCanData(uint16_t elapsedMs)
 
     #endif
 
+    // E888 combines EGT and IO expander data, so handle it separately
     #if (MOTEC_E888_ENABLED > 0)
         static uint16_t elapsedSinceMotecE888TxMs = 0;
         if (IsMotecE888Enabled(configuration)) {

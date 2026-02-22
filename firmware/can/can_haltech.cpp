@@ -14,7 +14,6 @@
 #include "heater_control.h"
 #include "lambda_conversion.h"
 #include "max3185x.h"
-#include "../for_rusefi/wideband_can.h"
 
 // Haltech protocol
 // 1Mbps, big endian, DLC 8

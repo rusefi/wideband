@@ -11,3 +11,6 @@
 extern const ProtocolHandler ecuMasterAfrTxHandler;
 extern const ProtocolHandler ecuMasterClassicEgtTxHandler;
 extern const ProtocolHandler ecuMasterBlackEgtTxHandler;
+extern const ProtocolHandler ecuMasterSwitchBoardTxHandler;
+
+void HandleEcuMasterCanMessage(const CANRxFrame* msg, Configuration* configuration);

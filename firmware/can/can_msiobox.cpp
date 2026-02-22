@@ -195,7 +195,7 @@ void ProcessMsIoBoxCanMessage(const CANRxFrame* fr, Configuration* cfg)
     }
 
     const uint32_t base = MS_IOBOX_DEVICE_ID(cfg->ioExpanderConfig.Offset);
-    uint32_t frame_id = fr->SID;
+    uint32_t frame_id = CAN_ID(*fr);
 
     if ((frame_id < base) || (frame_id > base + MS_IOBOX_LAST_IN))
         return;
