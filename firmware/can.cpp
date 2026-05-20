@@ -10,6 +10,7 @@
 #include "pump_dac.h"
 #include "port.h"
 #include "pump_control.h"
+#include "wideband_config.h"
 
 #include <rusefi/math.h>
 
@@ -26,7 +27,7 @@ void CanTxThread(void*)
     // Current system time.
     systime_t prev = chVTGetSystemTime();
 
-    while(1)
+    while (1)
     {
         for (int ch = 0; ch < AFR_CHANNELS; ch++)
         {
@@ -64,7 +65,7 @@ void CanRxThread(void*)
 {
     chRegSetThreadName("CAN Rx");
 
-    while(1)
+    while (1)
     {
         CANRxFrame frame;
         msg_t msg = canReceiveTimeout(&CAND1, CAN_ANY_MAILBOX, &frame, TIME_INFINITE);
@@ -81,46 +82,56 @@ void CanRxThread(void*)
             continue;
         }
 
-        if (frame.DLC >= 2 && CAN_ID(frame) == WB_MGS_ECU_STATUS)
+        // Ignore not ours frames
+        if (WB_MSG_GET_HEADER(CAN_ID(frame)) != WB_BL_HEADER)
+        {
+            continue;
+        }
+
+        if (frame.DLC >= 2 && CAN_ID(frame) == WB_MSG_ECU_STATUS)
         {
             // This is status from ECU
             // - battery voltage
             // - heater enable signal
             // - optionally pump control gain
 
-            // data1 contains heater enable bit
-            if ((frame.data8[1] & 0x1) == 0x1)
-            {
-                heaterAllow = HeaterAllow::Allowed;
-            }
-            else
-            {
-                heaterAllow = HeaterAllow::NotAllowed;
-            }
-
             // data0 contains battery voltage in tenths of a volt
             float vbatt = frame.data8[0] * 0.1f;
-            if (vbatt < 5)
+            remoteBatteryVoltage = vbatt;
+
+            if (vbatt < HEATER_BATTERY_OFF_VOLTAGE)
             {
-                // provided vbatt is bogus, default to 14v nominal
-                remoteBatteryVoltage = 14;
+                // Supply voltage too low to heat, override allow state
+                heaterAllow = HeaterAllow::NotAllowed;
             }
             else
             {
-                remoteBatteryVoltage = vbatt;
+                // Voltage is high enough, check if ECU says we're allowed to heat
+                // data1 contains heater enable bit
+                if ((frame.data8[1] & 0x1) == 0x1)
+                {
+                    heaterAllow = HeaterAllow::Allowed;
+                }
+                else
+                {
+                    heaterAllow = HeaterAllow::NotAllowed;
+                }
             }
 
-            if (frame.DLC >= 3) {
-                // data2 contains heater gain in percent (0-200)
-                float pumpGain = frame.data8[1] * 0.01f;
+            if (frame.DLC >= 3)
+            {
+                // data2 contains pump controller gain in percent (0-200)
+                float pumpGain = frame.data8[2] * 0.01f;
                 SetPumpGainAdjust(clampF(0, pumpGain, 1));
             }
         }
         // If it's a bootloader entry request, reboot to the bootloader!
-        else if ((frame.DLC == 0 || frame.DLC == 1) && CAN_ID(frame) == WB_BL_ENTER)
+        // DLC=1 required: data[0] is 0xFF (all) or a specific controller index.
+        // DLC=0 is ignored so that only the targeted controller enters bootloader
+        // when multiple controllers share a bus.
+        else if (frame.DLC == 1 && CAN_ID(frame) == WB_BL_ENTER)
         {
-            // If 0xFF (force update all) or our ID, reset to bootloader, otherwise ignore
-            if (frame.DLC == 0 || frame.data8[0] == 0xFF || frame.data8[0] == GetConfiguration()->CanIndexOffset)
+            if (frame.data8[0] == 0xFF || frame.data8[0] == GetConfiguration()->CanIndexOffset)
             {
                 SendAck();
 
@@ -173,12 +184,8 @@ void SendRusefiFormat(uint8_t ch)
 
     // Lambda is valid if:
     // 1. Nernst voltage is near target
-    // 2. Pump driver isn't slammed in to the stop
-    // 3. Lambda is >0.6 (sensor isn't specified below that)
-    bool lambdaValid =
-            nernstDc > (NERNST_TARGET - 0.1f) && nernstDc < (NERNST_TARGET + 0.1f) &&
-            pumpDuty > 0.1f && pumpDuty < 0.9f &&
-            lambda > 0.6f;
+    // 2. Lambda is >0.6 (sensor isn't specified below that)
+    bool lambdaValid = nernstDc > (NERNST_TARGET - 0.1f) && nernstDc < (NERNST_TARGET + 0.1f) && lambda > 0.6f;
 
     {
         CanTxTyped<wbo::StandardData> frame(baseAddress + 0);
