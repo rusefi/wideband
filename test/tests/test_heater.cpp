@@ -164,6 +164,20 @@ TEST(HeaterStateMachine, ClosedLoop)
     EXPECT_EQ(HeaterState::Stopped, dut.GetNextState(HeaterState::ClosedLoop, HeaterAllow::Allowed, 12, 600));
 }
 
+TEST(HeaterStateMachine, NoHeatToPreHeat)
+{
+    MockHeater dut;
+    Timer::setMockTime(0);
+    dut.Configure(780, 300);
+
+    // ECU command NotAllowed, no heat
+    EXPECT_EQ(HeaterState::NoHeat, dut.GetNextState(HeaterState::NoHeat, HeaterAllow::NotAllowed, 12, 300));
+    Timer::advanceMockTime(10e6);
+    EXPECT_EQ(HeaterState::Preheat, dut.GetNextState(HeaterState::NoHeat, HeaterAllow::Allowed, 12, 300));
+    Timer::advanceMockTime(10e6);
+    EXPECT_EQ(HeaterState::WarmupRamp, dut.GetNextState(HeaterState::Preheat, HeaterAllow::Allowed, 12, 300));
+}
+
 TEST(HeaterStateMachine, TerminalStates)
 {
     MockHeater dut;

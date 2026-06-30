@@ -10,6 +10,7 @@
 
 enum class HeaterState
 {
+    NoHeat,
     Preheat,
     WarmupRamp,
     ClosedLoop,
