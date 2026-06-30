@@ -74,6 +74,10 @@ TEST(HeaterStateMachine, PreheatToWarmupAlreadyWarm)
     Timer::setMockTime(0);
     dut.Configure(780, 300);
 
+    // Stabilization not elapsed yet: no heat
+    EXPECT_EQ(HeaterState::NoHeat, dut.GetNextState(HeaterState::NoHeat, HeaterAllow::Allowed, 12, 500));
+    Timer::advanceMockTime(501 * 1000);
+
     // Preheat for a little while
     for (size_t i = 0; i < 10; i++)
     {
@@ -91,8 +95,8 @@ TEST(HeaterStateMachine, WarmupToClosedLoop)
     Timer::setMockTime(0);
     dut.Configure(780, 300);
 
-    // Skip stabilization timer: 500+ mS
-    EXPECT_EQ(HeaterState::Preheat, dut.GetNextState(HeaterState::WarmupRamp, HeaterAllow::Allowed, 12, 500));
+    // Stabilization not elapsed yet: no heat
+    EXPECT_EQ(HeaterState::NoHeat, dut.GetNextState(HeaterState::WarmupRamp, HeaterAllow::Allowed, 12, 500));
     Timer::advanceMockTime(501 * 1000);
 
     // Warm up for a little while
@@ -131,8 +135,8 @@ TEST(HeaterStateMachine, ClosedLoop)
     Timer::setMockTime(0);
     dut.Configure(780, 300);
 
-    // Skip stabilization timer: 500+ mS
-    EXPECT_EQ(HeaterState::Preheat, dut.GetNextState(HeaterState::WarmupRamp, HeaterAllow::Allowed, 12, 500));
+    // Stabilization not elapsed yet: no heat
+    EXPECT_EQ(HeaterState::NoHeat, dut.GetNextState(HeaterState::WarmupRamp, HeaterAllow::Allowed, 12, 500));
     Timer::advanceMockTime(501 * 1000);
 
     // Temperature is reasonable, stay in closed loop
@@ -164,13 +168,27 @@ TEST(HeaterStateMachine, ClosedLoop)
     EXPECT_EQ(HeaterState::Stopped, dut.GetNextState(HeaterState::ClosedLoop, HeaterAllow::Allowed, 12, 600));
 }
 
+TEST(HeaterStateMachine, NoHeatToPreHeat)
+{
+    MockHeater dut;
+    Timer::setMockTime(0);
+    dut.Configure(780, 300);
+
+    // ECU command NotAllowed, no heat
+    EXPECT_EQ(HeaterState::NoHeat, dut.GetNextState(HeaterState::NoHeat, HeaterAllow::NotAllowed, 12, 300));
+    Timer::advanceMockTime(10e6);
+    EXPECT_EQ(HeaterState::Preheat, dut.GetNextState(HeaterState::NoHeat, HeaterAllow::Allowed, 12, 300));
+    Timer::advanceMockTime(10e6);
+    EXPECT_EQ(HeaterState::WarmupRamp, dut.GetNextState(HeaterState::Preheat, HeaterAllow::Allowed, 12, 300));
+}
+
 TEST(HeaterStateMachine, TerminalStates)
 {
     MockHeater dut;
     dut.Configure(780, 300);
 
-    // Skip stabilization timer: 500+ mS
-    EXPECT_EQ(HeaterState::Preheat, dut.GetNextState(HeaterState::WarmupRamp, HeaterAllow::Allowed, 12, 500));
+    // Stabilization not elapsed yet: no heat
+    EXPECT_EQ(HeaterState::NoHeat, dut.GetNextState(HeaterState::WarmupRamp, HeaterAllow::Allowed, 12, 500));
     Timer::advanceMockTime(501 * 1000);
 
     EXPECT_EQ(HeaterState::Stopped, dut.GetNextState(HeaterState::Stopped, HeaterAllow::Allowed, 12, 780));
