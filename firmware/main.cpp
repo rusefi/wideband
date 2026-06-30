@@ -61,7 +61,7 @@ int main()
         /* TODO: show EGT errors */
         auto status = GetCurrentStatus(0);
 
-        if (status < Status::SensorDidntHeat)
+        if (status < Status::FirstError)
         {
             // blue is off
             palClearPad(LED_BLUE_PORT, LED_BLUE_PIN);

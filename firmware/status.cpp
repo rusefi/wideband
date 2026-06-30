@@ -21,7 +21,7 @@ bool HasFault()
 
     for (int ch = 0; ch < AFR_CHANNELS; ch++)
     {
-        fault |= (GetCurrentStatus(ch) >= Status::SensorDidntHeat);
+        fault |= (GetCurrentStatus(ch) >= Status::FirstError);
     }
 
     return fault;

@@ -74,18 +74,21 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState,
 
     if (!heaterAllowed)
     {
-        // ECU hasn't allowed preheat yet, reset timer, and force preheat state
-        m_preheatTimer.reset();
-        SetStatus(ch, Status::Preheat);
-        return HeaterState::Preheat;
+        // ECU hasn't allowed preheat yet, no heat
+        SetStatus(ch, Status::NoHeat);
+        return HeaterState::NoHeat;
     }
 
-    float overheatTemp = m_targetTempC + 100;
-    float closedLoopTemp = m_targetTempC - 30;
-    float underheatTemp = m_targetTempC - 100;
+    float overheatTemp = m_targetTempC + HEATER_OVERHEAT_DELTA;
+    float closedLoopEntryTemp = m_targetTempC + HEATER_CL_ENTRY_TEMP_DELTA;
+    float underheatTemp = m_targetTempC + HEATER_UNDERHEAT_DELTA;
 
     switch (currentState)
     {
+    case HeaterState::NoHeat:
+        m_preheatTimer.reset();
+        SetStatus(ch, Status::Preheat);
+        return HeaterState::Preheat;
     case HeaterState::Preheat:
 #ifdef HEATER_FAST_HEATING_THRESHOLD_T
         if (sensorTemp >= HEATER_FAST_HEATING_THRESHOLD_T)
@@ -102,7 +105,7 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState,
 #endif
 
         // If preheat timeout, or sensor is already hot (engine running?)
-        if (m_preheatTimer.hasElapsedSec(m_preheatTimeSec) || sensorTemp > closedLoopTemp)
+        if (m_preheatTimer.hasElapsedSec(m_preheatTimeSec) || sensorTemp > closedLoopEntryTemp)
         {
             // If enough time has elapsed, start the ramp
             // Start the ramp at 7 volts
@@ -118,7 +121,7 @@ HeaterState HeaterControllerBase::GetNextState(HeaterState currentState,
         // Stay in preheat - wait for time to elapse
         break;
     case HeaterState::WarmupRamp:
-        if (sensorTemp > closedLoopTemp)
+        if (sensorTemp > closedLoopEntryTemp)
         {
             SetStatus(ch, Status::RunningClosedLoop);
             return HeaterState::ClosedLoop;
@@ -185,6 +188,7 @@ float HeaterControllerBase::GetVoltageForState(HeaterState state, float sensorEs
 
         // TODO: heater PID should operate on temperature, not ESR
         return 7.5f - m_pid.GetOutput(m_targetEsr, sensorEsr);
+    case HeaterState::NoHeat:
     case HeaterState::Stopped:
         // Something has gone wrong, turn off the heater.
         return 0;
@@ -256,6 +260,7 @@ const char* describeHeaterState(HeaterState state)
 {
     switch (state)
     {
+    case HeaterState::NoHeat: return "Noheat";
     case HeaterState::Preheat: return "Preheat";
     case HeaterState::WarmupRamp: return "WarmupRamp";
     case HeaterState::ClosedLoop: return "ClosedLoop";

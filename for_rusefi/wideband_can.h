@@ -45,15 +45,16 @@ namespace wbo
 {
 enum class Status : uint8_t
 {
-    Preheat = 0,
-    Warmup = 1,
-    RunningClosedLoop = 2,
+    NoHeat = 0,
+    Preheat = 1,
+    Warmup = 2,
+    RunningClosedLoop = 3,
 
-    // First fault code at 3 so it's easier to see blink code
-    FirstError = 3,
-    SensorDidntHeat = 3,
-    SensorOverheat = 4,
-    SensorUnderheat = 5,
+    // First fault code at 4 so it's easier to see blink code
+    FirstError = 4,
+    SensorDidntHeat = 4,
+    SensorOverheat = 5,
+    SensorUnderheat = 6,
 };
 
 static inline bool isStatusError(Status s)
@@ -89,6 +90,7 @@ static inline const char* describeStatus(Status status)
 {
     switch (status)
     {
+    case Status::NoHeat: return "Noheat (waiting Allowed)";
     case Status::Preheat: return "Preheat (waiting)";
     case Status::Warmup: return "Warming up";
     case Status::RunningClosedLoop: return "Running";

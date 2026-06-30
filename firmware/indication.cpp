@@ -44,7 +44,7 @@ static void IndicationThread(void* ptr)
     {
         auto status = GetCurrentStatus(data->idx);
 
-        if (status < Status::SensorDidntHeat)
+        if (status < Status::FirstError)
         {
             // Green is blinking
             palToggleLine(data->line);

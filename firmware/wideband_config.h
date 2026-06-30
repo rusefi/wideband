@@ -50,6 +50,12 @@
 #define HEATER_BATTERY_ON_VOLTAGE 9.5
 // mininal battery voltage to continue heating
 #define HEATER_BATTERY_OFF_VOLTAGE 7
+// max delta temp to detect overheating (temp + delta > HEATER_OVERHEAT_DELTA)
+#define HEATER_OVERHEAT_DELTA 100
+// max delta temp to detect underheat (temp + delta < HEATER_UNDERHEAT_DELTA)
+#define HEATER_UNDERHEAT_DELTA (-100)
+// when targetTemp + HEATER_CL_ENTRY_TEMP_DELTA > temp, entering in closed loop
+#define HEATER_CL_ENTRY_TEMP_DELTA (-30)
 
 // *******************************
 // Start driving the pump just before we're at target temperature
