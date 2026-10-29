@@ -64,4 +64,8 @@ REGION_ALIAS("BSS_RAM", ram0);
 REGION_ALIAS("HEAP_RAM", ram0);
 
 /* Generic rules inclusion.*/
+/* Reserved Cortex-M0 vector at +0x20 identifies the shared bitrate-record ABI. */
+/* Keep in sync with for_rusefi/wideband_bitrate.h. */
+Vector20 = 0x57424331;
+
 INCLUDE rules.ld

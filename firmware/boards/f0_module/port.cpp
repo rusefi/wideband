@@ -1,8 +1,12 @@
 #include "port.h"
 #include "shared/flash.h"
+#include "can_bitrate_storage.h"
 #include "shared/strap_pin.h"
 
 #include "wideband_config.h"
+#include "../../../for_rusefi/wideband_bitrate.h"
+
+wbo::CanBitrate ReadCanBitrate();
 
 #include "ch.hpp"
 #include "hal.h"
@@ -85,7 +89,7 @@ size_t BoardGetHwId()
     return boardHwId;
 }
 
-extern Configuration __configflash__start__;
+extern uint8_t __configflash__start__[];
 
 int InitConfiguration()
 {
@@ -102,7 +106,7 @@ static Configuration config;
 
 Configuration* GetConfiguration()
 {
-    const auto& cfg = __configflash__start__;
+    const auto& cfg = *reinterpret_cast<const Configuration*>(__configflash__start__);
 
     // If config has been written before, use the stored configuration
     if (cfg.IsValid())
@@ -132,17 +136,31 @@ Configuration* GetConfiguration()
     return &config;
 }
 
+static bool WriteConfiguration(wbo::CanBitrate bitrate)
+{
+    static_assert(sizeof(Configuration) <= wbo::CanBitrateRecordOffset);
+    chSysLock();
+    const bool saved = WriteCanConfiguration(__configflash__start__,
+        reinterpret_cast<const uint8_t*>(&config), sizeof(config), bitrate);
+    chSysUnlock();
+    return saved;
+}
+
 void SetConfiguration()
 {
-    // erase config page
-    Flash::ErasePage(31);
+    // A sensor type/index write must preserve a pending bitrate, too.
+    WriteConfiguration(ReadCanBitrate());
+}
 
-    // Copy data to flash
-    Flash::Write(
-        reinterpret_cast<flashaddr_t>(&__configflash__start__),
-        reinterpret_cast<const uint8_t*>(&config),
-        sizeof(Configuration)
-    );
+bool SetCanBitrate(uint8_t value)
+{
+    const auto marker = *reinterpret_cast<const volatile uint32_t*>(wbo::CanBitrateBootloaderMarkerAddress);
+    if (!wbo::IsBitrateChangeAllowed(value, marker)) {
+        return false;
+    }
+    auto bitrate = static_cast<wbo::CanBitrate>(value);
+    GetConfiguration();
+    return WriteConfiguration(bitrate);
 }
 
 SensorType GetSensorType()
