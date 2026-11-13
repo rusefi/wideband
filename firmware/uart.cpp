@@ -111,6 +111,12 @@ static UartTsChannel primaryChannel(TS_PRIMARY_UART_PORT);
 static SerialTsChannel primaryChannel(TS_PRIMARY_SERIAL_PORT);
 #endif
 
+#ifdef TS_PRIMARY_USB_SERIAL_PORT
+#include "usbcfg.h"
+
+static UsbTsChannel primaryChannel(TS_PRIMARY_USB_SERIAL_PORT, serusbcfg, usbcfg);
+#endif
+
 struct PrimaryChannelThread final : public TunerstudioThread
 {
     PrimaryChannelThread()

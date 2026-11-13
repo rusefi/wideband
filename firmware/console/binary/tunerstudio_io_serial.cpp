@@ -287,3 +287,45 @@ size_t UartTsChannel::readTimeout(uint8_t* buffer, size_t size, int timeout) {
 	return size;
 }
 #endif // HAL_USE_UART
+
+#if HAL_USE_SERIAL_USB
+int UsbTsChannel::start(uint32_t) {
+	sduObjectInit(m_driver);
+	sduStart(m_driver, m_config);
+
+	/*
+	 * Activates the USB driver and then the USB bus pull-up on D+.
+	 * Note, a delay is inserted in order to not have to disconnect the cable
+	 * after a reset.
+	 */
+	usbDisconnectBus(m_config->usbp);
+	chThdSleepMilliseconds(1500);
+	usbStart(m_config->usbp, m_usbConfig);
+	usbConnectBus(m_config->usbp);
+
+	return 0;
+}
+
+void UsbTsChannel::stop() {
+	usbDisconnectBus(m_config->usbp);
+	usbStop(m_config->usbp);
+	sduStop(m_driver);
+}
+
+bool UsbTsChannel::isReady() const {
+	return usbGetDriverStateI(m_config->usbp) == USB_ACTIVE;
+}
+
+void UsbTsChannel::write(const uint8_t* buffer, size_t size, bool) {
+	chnWriteTimeout(m_driver, buffer, size, BINARY_IO_TIMEOUT);
+}
+
+size_t UsbTsChannel::readTimeout(uint8_t* buffer, size_t size, int timeout) {
+	return chnReadTimeout(m_driver, buffer, size, timeout);
+}
+
+void UsbTsChannel::flush() {
+	// do not wait for SOF to send out partially filled buffer
+	obqFlush(&m_driver->obqueue);
+}
+#endif // HAL_USE_SERIAL_USB

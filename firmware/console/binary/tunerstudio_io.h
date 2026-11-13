@@ -136,6 +136,31 @@ protected:
 };
 #endif // HAL_USE_UART
 
+#if HAL_USE_SERIAL_USB
+// This class implements a ChibiOS Serial-over-USB (CDC ACM) Driver
+class UsbTsChannel final : public SerialTsChannelBase {
+public:
+	UsbTsChannel(SerialUSBDriver& driver, const SerialUSBConfig& config, const USBConfig& usbConfig)
+		: SerialTsChannelBase("USB"), m_driver(&driver), m_config(&config), m_usbConfig(&usbConfig) { }
+
+	// baud rate is ignored: USB CDC has no physical line
+	int start(uint32_t newBaud) override;
+	void stop() override;
+
+	// true while device is configured by USB host
+	bool isReady() const override;
+
+	void write(const uint8_t* buffer, size_t size, bool isEndOfPacket) override;
+	size_t readTimeout(uint8_t* buffer, size_t size, int timeout) override;
+	void flush() override;
+
+private:
+	SerialUSBDriver* const m_driver;
+	const SerialUSBConfig* const m_config;
+	const USBConfig* const m_usbConfig;
+};
+#endif // HAL_USE_SERIAL_USB
+
 #define CRC_VALUE_SIZE 4
 // todo: double-check this
 #define CRC_WRAPPING_SIZE (CRC_VALUE_SIZE + 3)

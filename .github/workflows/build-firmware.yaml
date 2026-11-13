@@ -16,6 +16,7 @@ jobs:
           - build-target: f1_rev3
           - build-target: f1_dual
           - build-target: f1_dual_rev1
+          - build-target: f1_dual_rev2_usb
 
     steps:
       - uses: actions/checkout@v1

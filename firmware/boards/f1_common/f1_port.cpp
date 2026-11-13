@@ -27,8 +27,8 @@ static const MFSConfig mfscfg1 = {
     .bank1_start      = 124U,
     .bank1_sectors    = 4U
 #endif
-#ifdef STM32F103xE
-    /* 256K flash device with 2K pages
+#if defined(STM32F103xE) || defined(STM32F105xC)
+    /* 256K flash device with 2K pages (F103xC/xE, F105xC)
      * use last 8 pages for settings
      * one bank is 8K */
     .bank_size        = 8096U,
