@@ -18,6 +18,12 @@
 // this same header is imported by rusEFI to get struct layouts and firmware version
 #include "../for_rusefi/wideband_can.h"
 
+#include "../for_rusefi/wideband_bitrate.h"
+
+#if defined(WB_CAN_BITRATE_CONFIG) && WB_CAN_BITRATE_CONFIG
+bool SetCanBitrate(uint8_t value);
+#endif
+
 using namespace wbo;
 
 static Configuration* configuration;
@@ -163,6 +169,24 @@ void CanRxThread(void*)
             SetConfiguration();
             SendAck();
         }
+#if defined(WB_CAN_BITRATE_CONFIG) && WB_CAN_BITRATE_CONFIG
+        // Persist only: keep communicating at the current bitrate until power cycle.
+        else if (CAN_ID(frame) == wbo::SetBitrateId && frame.DLC == 2 &&
+            frame.RTR == CAN_RTR_DATA && frame.data8[0] == BoardGetHwId() &&
+            wbo::IsBitrateRequestValid(frame.data8[0], frame.data8[1]))
+        {
+            if (SetCanBitrate(frame.data8[1])) {
+                CANTxFrame ack{};
+                ack.IDE = CAN_IDE_EXT;
+                ack.EID = wbo::BitrateAckId;
+                ack.RTR = CAN_RTR_DATA;
+                ack.DLC = 2;
+                ack.data8[0] = frame.data8[0];
+                ack.data8[1] = frame.data8[1];
+                canTransmitTimeout(&CAND1, CAN_ANY_MAILBOX, &ack, TIME_MS2I(100));
+            }
+        }
+#endif
         // Set sensor type command?
         else if (CAN_ID(frame) == WB_MSG_SET_SENS_TYPE &&
             frame.DLC == 2 && frame.data8[0] == BoardGetHwId())
