@@ -113,6 +113,12 @@ static bool r_heater;
 
 static bool l_heater;
 
+static bool isClamped(float v)
+{
+    // is voltage too close to ADC bounds?
+    return (v <= 0.01) || (v >= (VCC_VOLTS - 0.01));
+}
+
 void AnalogSampleStart()
 {
     /* TODO: remove Vbat measurement through heaters
@@ -153,13 +159,19 @@ AnalogResult AnalogSampleFinish()
     res.VirtualGroundVoltageInt = HALF_VCC;
 
     for (int i = 0; i < AFR_CHANNELS; i++) {
+        res.ch[i].NernstClamped = false;
         float NernstRaw = AverageSamples(adcBuffer, (i == 0) ? 3 : 1);
-        if ((NernstRaw > 0.01) && (NernstRaw < (3.3 - 0.01))) {
+        if (!isClamped(NernstRaw)) {
             /* not clamped */
             res.ch[i].NernstVoltage = (NernstRaw - NERNST_INPUT_OFFSET) * (1.0 / NERNST_INPUT_GAIN);
         } else {
             /* Clamped, use ungained input */
-            res.ch[i].NernstVoltage = AverageSamples(adcBuffer, (i == 0) ? 9 : 8) - HALF_VCC;
+            NernstRaw = AverageSamples(adcBuffer, (i == 0) ? 9 : 8);
+            if (isClamped(NernstRaw)) {
+                res.ch[i].NernstClamped = true;
+            }
+            /* even it is clamped */
+            res.ch[i].NernstVoltage = NernstRaw - HALF_VCC;
         }
     }
     /* left */
